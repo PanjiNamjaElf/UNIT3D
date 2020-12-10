@@ -2,13 +2,13 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Mail;
@@ -20,14 +20,14 @@ use Illuminate\Queue\SerializesModels;
 
 class InviteUser extends Mailable
 {
-    use Queueable, SerializesModels;
-
+    use Queueable;
+    use SerializesModels;
     public $invite;
 
     /**
      * Create a new message instance.
      *
-     * @param  Invite  $invite
+     * @param Invite $invite
      */
     public function __construct(Invite $invite)
     {
@@ -42,6 +42,6 @@ class InviteUser extends Mailable
     public function build()
     {
         return $this->markdown('emails.invite')
-            ->subject('Invite Received '.config('other.title'));
+            ->subject('Invite Received '.\config('other.title'));
     }
 }

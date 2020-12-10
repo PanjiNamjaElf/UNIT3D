@@ -1,7 +1,7 @@
 /*
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
  * @project    UNIT3D
@@ -17,54 +17,277 @@
  * facetedSearchBuilder - To add filters for search / Used: Torrents
  * forumTipBuilder - To add tip buttons for forum / Used: Topics
  * userExtensionBuilder - To add toggle capabilities to BON / Used: BON
- * configExtensionBuilder - To add Swal to config manager / Used: Admin Config Manager
  *
  * After classes, event attachments then globals.
 */
 
 class uploadExtensionBuilder {
-    constructor() {
-        // Empty for now
+    // https://stackoverflow.com/a/10710400
+    // get all indexes of ch in str
+    getAllIndexes(str, ch) {
+      const indices = []
+      for (let i = 0; i < str.length; i++) {
+            if (str[i] === ch) indices.push(i);
+        }
+        return indices;
+    }
+    // is index in range of str?
+    inRange(str, index) {
+        return (index >= 0 && index < str.length);
+    }
+    // https://stackoverflow.com/a/8935675
+    is_numeric(str) {
+        return /^\d+$/.test(str)
+    }
+    // https://www.geeksforgeeks.org/how-to-replace-a-character-at-a-particular-index-in-javascript/
+    replaceChar(origString, replaceChar, index) {
+        let firstPart = origString.substr(0, index);
+        let lastPart = origString.substr(index + 1);
+
+        let newString = firstPart + replaceChar + lastPart;
+        return newString;
+    }
+    removeDots(title) {
+        // replace dots with spaces that are between:
+        // 1) letter and letter
+        // 2) number and letter
+        // 3) . 4 numbers (.year)
+        // 4) 4 numbers and 3 numbers followed by i or p (year and resolution, 2020.720p)
+        // 5) 4 numbers and 4 numbers followed by i or p (year and resolution, 2020.1080p)
+        // 6) S 2 numbers . 3 numbers followed by i or p (season and resolution, S01.720p)
+        // 7) S 2 numbers . 4 numbers followed by i or p (season and resolution, S01.1080p)
+        // 8) 2 letters . number . number (DD.2.0 or AAC.2.0 or DD+.2.0 or DTS-X.7.1)
+
+        let newTitle = title;
+
+        // array of indexes of each dot location
+        const indexes = this.getAllIndexes(title, ".")
+
+        // for each dot dot location
+        for (const i of indexes) {
+            if (this.inRange(title, i - 1) && this.inRange(title, i + 1)) {
+                // characters before and after dot
+                const before = title[i - 1]
+                const after = title[i + 1]
+
+                if (!this.is_numeric(before) && !this.is_numeric(after)) {
+                    // Case 1: letter and letter
+                    newTitle = this.replaceChar(newTitle, " ", i)
+                    continue;
+                } else if (this.is_numeric(before) && !this.is_numeric(after)) {
+                    // Case 2: number and letter
+                    newTitle = this.replaceChar(newTitle, " ", i)
+                    continue;
+                }
+            }
+
+            // Case 3: . 4 numbers (.year)
+            if (this.inRange(title, i + 5)) {
+                const after = title.substring(i + 1, i + 5)
+                if (this.is_numeric(after)) {
+                    newTitle = this.replaceChar(newTitle, " ", i)
+                    continue;
+                }
+            }
+
+            // Case 4: 4 numbers and 3 numbers followed by i or p (year and resolution, 2020.720p)
+            if (this.inRange(title, i - 4) && this.inRange(title, i + 4)) {
+                const beforeNum = title.substring(i - 4, i) // ex. 1987
+                const afterNum = title.substring(i + 1, i + 4) // ex. 480, 576 or 720
+                const afterResolution = title.charAt(i + 4).toLowerCase() // i or p
+
+                if (this.is_numeric(beforeNum) && this.is_numeric(afterNum) && (afterResolution == "i" || afterResolution == "p")) {
+                    newTitle = this.replaceChar(newTitle, " ", i)
+                    continue;
+                }
+            }
+
+            // Case 5: 4 numbers and 4 numbers followed by i or p (year and resolution, 2020.1080p)
+            if (this.inRange(title, i - 4) && this.inRange(title, i + 5)) {
+                const beforeNum = title.substring(i - 4, i) // ex. 1987
+                const afterNum = title.substring(i + 1, i + 5) // ex. 1080 or 2160
+                const afterResolution = title.charAt(i + 5).toLowerCase() // i or p
+
+                if (this.is_numeric(beforeNum) && this.is_numeric(afterNum) && (afterResolution == "i" || afterResolution == "p")) {
+                    newTitle = this.replaceChar(newTitle, " ", i)
+                    continue;
+                }
+            }
+
+            // Case 6: S 2 numbers . 3 numbers followed by i or p (season and resolution, S01.720p)
+            if (this.inRange(title, i - 3) && this.inRange(i + 4)) {
+                const beforeNum = title.substring(i - 3, i - 2).toLowerCase() // ex. S
+                const seasonNum = title.substring(i - 2, i).toLowerCase() // ex. 01
+
+                const afterNum = title.substring(i + 1, i + 4) // ex. 480, 576 or 720
+                const afterResolution = title.charAt(i + 4).toLowerCase() // i or p
+
+                if (beforeNum == "s" && this.is_numeric(seasonNum) && (afterResolution == "i" || afterResolution == "p")) {
+                    newTitle = this.replaceChar(newTitle, " ", i)
+                    continue;
+                }
+            }
+
+            // Case 7: S 2 numbers . 4 numbers followed by i or p (season and resolution, S01.720p)
+            if (this.inRange(title, i - 3) && this.inRange(i + 5)) {
+                const beforeNum = title.substring(i - 3, i - 2).toLowerCase() // ex. S
+                const seasonNum = title.substring(i - 2, i).toLowerCase() // ex. 01
+
+                const afterNum = title.substring(i + 1, i + 5) // ex. 1080 or 2160
+                const afterResolution = title.charAt(i + 5).toLowerCase() // i or p
+
+                if (beforeNum == "s" && this.is_numeric(seasonNum) && (afterResolution == "i" || afterResolution == "p")) {
+                    newTitle = this.replaceChar(newTitle, " ", i)
+                    continue;
+                }
+            }
+
+            // Case 8: 2 letters . number (DD.2.0 or AAC.2.0 or DD+.2.0 or DTS-X.7.1)
+            // looking at it from the first dot only
+            if (this.inRange(title, i - 1) && this.inRange(title, i + 1)) {
+                const before = title.substring(i - 1, i).toLowerCase() // ex. DD or AC or D+ or -X
+                const after = title.charAt(i + 1) // number
+
+                if (!this.is_numeric(before) && this.is_numeric(after)) {
+                    newTitle = this.replaceChar(newTitle, " ", i)
+
+                }
+            }
+        }
+
+        return newTitle;
     }
     hook() {
         let name = document.querySelector('#title');
         let torrent = document.querySelector('#torrent');
+        let release;
         if (!name.value) {
-            let fileEndings = ['.mkv.torrent', '.mp4.torrent', '.torrent'];
-            let allowed = ['1.0', '2.0', '5.1', '6.1', '7.1', 'H.264'];
-            var newValue = '';
-            var preValue = torrent.value;
+            const fileEndings = ['.mkv.torrent', '.mp4.torrent', '.torrent'];
+          let newValue = torrent.value
+          // strip path
+            newValue = newValue.split('\\').pop().split('/').pop();
+            // remove file endings
             fileEndings.forEach(function (e) {
-                preValue = preValue.replace(e, '');
+                newValue = newValue.replace(e, '');
             });
-            var recursion = preValue.split('\\').pop().split('/').pop();
-            for(var i=0; i<recursion.length; i++) {
-                var prev = false;
-                var next = false;
-                if(recursion[i] == '.') {
-                    var joined = false;
-                    for(var j=0; j<allowed.length; j++) {
-                        var tmp = allowed[j].split('.');
-                        if(tmp[0] == 'H') {
-                            if (recursion[i - 1] != undefined && recursion[i - 1] == tmp[0] && recursion[i + 1] != undefined && recursion[i + 1] == '2' && recursion[i + 2] != undefined && recursion[i + 2] == '6' && recursion[i + 3] != undefined && recursion[i + 3] =='4') {
-                                joined = true;
-                            }
-                        } else {
-                            if (recursion[i - 1] != undefined && recursion[i - 1] == tmp[0] && recursion[i + 1] != undefined && recursion[i + 1] == tmp[1]) {
-                                joined = true;
-                            }
-                        }
-                    }
-                    if(joined == false) { newValue=newValue+' '; }
-                    else {
-                        newValue = newValue+'.';
-                    }
+            // replace dots with spaces
+            name.value = this.removeDots(newValue);
+        }
+
+        /* PARSING */
+        release = title_parser.parse(name.value, {
+            strict: true, // if no main tags found, will throw an exception
+            flagged: true, // add flags to generated relese name (like STV, REMASTERED, READNFO)
+            erase: [], // add expressions to erase before parsing
+            defaults: {"language": "ENGLISH"} // defaults values for : language, resolution and year
+        });
+
+ 
+
+        let matcher = name.value.toLowerCase();
+
+        // Torrent Category
+        if (release.type === "Movie") {
+            $("#autocat").val(1);
+        } else if (release.type === "TV Show") {
+            $("#autocat").val(2);
+        }
+
+        // Torrent Type
+        if (matcher.indexOf("bd50") > 0 || matcher.indexOf("bd25") > 0 || matcher.indexOf("untouched") > 0 || matcher.indexOf("dvd5") > 0 || matcher.indexOf("dvd9") > 0 || matcher.indexOf("mpeg-2") > 0 || matcher.indexOf("avc") > 0 || matcher.indexOf("vc-1") > 0) {
+            $("#autotype").val(1);
+        }
+        if (matcher.indexOf("remux") > 0) {
+            $("#autotype").val(2);
+        }
+        if (matcher.indexOf("x264") > 0) {
+            $("#autotype").val(3);
+        }
+        if (matcher.indexOf("x265") > 0) {
+            $("#autotype").val(3);
+        }
+        if (matcher.indexOf("webdl") > 0 || matcher.indexOf("web-dl") > 0) {
+            $("#autotype").val(4);
+        }
+        if (matcher.indexOf("web-rip") > 0 || matcher.indexOf("webrip") > 0) {
+            $("#autotype").val(5);
+        }
+        if (matcher.indexOf("hdtv") > 0) {
+            $("#autotype").val(6);
+        }
+
+        // Torrent Resolution
+        $("#autores").val(release.resolution);
+
+        // Torrent Season (TV Only)
+        $("#season_number").val(release.season);
+
+        // Torrent Episode (TV Only)
+        $("#episode_number").val(release.episode);
+
+        // Torrent TMDB ID
+        if (release.type === "Movie") {
+            theMovieDb.search.getMovie({ "query": release.title, "year": release.year }, successCB, errorCB);
+        } else if (release.type === "TV Show") {
+            theMovieDb.search.getTv({ "query": release.title }, successCB, errorCB);
+        }
+
+        function successCB(data) {
+            data = JSON.parse(data);
+            if (release.type === "Movie") {
+                if (data.results && data.results.length > 0) {
+                    $("#autotmdb").val(data.results[0].id);
+                    $("#apimatch").val('Found Match: ' + data.results[0].title + ' (' + data.results[0].release_date + ')');
+                    theMovieDb.movies.getKeywords({ "id": data.results[0].id }, success, error);
+                    theMovieDb.movies.getExternalIds({ "id": data.results[0].id }, s, e);
                 }
-                else {
-                    newValue = newValue + recursion[i];
+            } else if (release.type === "TV Show") {
+                if (data.results && data.results.length > 0) {
+                    $("#autotmdb").val(data.results[0].id);
+                    $("#apimatch").val('Found Match: ' + data.results[0].name + ' (' + data.results[0].first_air_date + ')');
+                    theMovieDb.tv.getKeywords({ "id": data.results[0].id }, success, error);
+                    theMovieDb.tv.getExternalIds({ "id": data.results[0].id }, s, e);
                 }
             }
-            name.value = newValue;
+        }
+        function errorCB(data) {
+            console.log("Error callback: " + data);
+        }
+
+        //Torrent Keywords
+        function success(data) {
+            data = JSON.parse(data);
+            if (release.type === "Movie") {
+                let tags = data.keywords.map(({ name }) => name).join(', ');
+                $("#autokeywords").val(tags);
+            } else if (release.type === "TV Show") {
+                let tags = data.results.map(({ name }) => name).join(', ');
+                $("#autokeywords").val(tags);
+            }
+        }
+        function error(data) {
+            console.log("Error callback: " + data);
+        }
+
+        //Torrent External IDs
+        function s(data) {
+            data = JSON.parse(data);
+            let imdb = data.imdb_id;
+            imdb = imdb.substring(2);
+            if (release.type === "Movie") {
+                $("#autoimdb").val(imdb);
+            } else if (release.type === "TV Show") {
+                $("#autoimdb").val(imdb);
+                $("#autotvdb").val(data.tvdb_id);
+            }
+        }
+        function e(data) {
+            console.log("Error callback: " + data);
+        }
+
+        // Torrent Stream Optimized?
+        if (release.container === "MP4" && release.audio === "AAC") {
+            document.getElementById("stream").checked = true;
         }
     }
 }
@@ -87,213 +310,213 @@ class userFilterBuilder {
     }
     handle(page,nav) {
 
-        var userId = $('#userFilter').attr('userId');
-        var userName = $('#userFilter').attr('userName');
+      const userId = $('#userFilter').attr('userId')
+      const userName = $('#userFilter').attr('userName')
 
-        var view = $('#userFilter').attr('view');
+      const view = $('#userFilter').attr('view')
 
-        var active = (function () {
-            if ($("#active").is(":checked")) {
-                return $("#active").val();
-            }
-        })();
+      const active = (function () {
+        if ($('#active').is(':checked')) {
+          return $('#active').val()
+        }
+      })()
 
-        var seeding = (function () {
-            if ($("#seeding").is(":checked")) {
-                return $("#seeding").val();
-            }
-        })();
+      const seeding = (function () {
+        if ($('#seeding').is(':checked')) {
+          return $('#seeding').val()
+        }
+      })()
 
-        var leeching = (function () {
-            if ($("#leeching").is(":checked")) {
-                return $("#leeching").val();
-            }
-        })();
+      const leeching = (function () {
+        if ($('#leeching').is(':checked')) {
+          return $('#leeching').val()
+        }
+      })()
 
-        var prewarned = (function () {
-            if ($("#prewarned").is(":checked")) {
-                return $("#prewarned").val();
-            }
-        })();
+      const prewarned = (function () {
+        if ($('#prewarned').is(':checked')) {
+          return $('#prewarned').val()
+        }
+      })()
 
-        var hr = (function () {
-            if ($("#hr").is(":checked")) {
-                return $("#hr").val();
-            }
-        })();
+      const hr = (function () {
+        if ($('#hr').is(':checked')) {
+          return $('#hr').val()
+        }
+      })()
 
-        var immune = (function () {
-            if ($("#immune").is(":checked")) {
-                return $("#immune").val();
-            }
-        })();
+      const immune = (function () {
+        if ($('#immune').is(':checked')) {
+          return $('#immune').val()
+        }
+      })()
 
-        var completed = (function () {
-            if ($("#completed").is(":checked")) {
-                return $("#completed").val();
-            }
-        })();
+      const completed = (function () {
+        if ($('#completed').is(':checked')) {
+          return $('#completed').val()
+        }
+      })()
 
-        var pending = (function () {
-            if ($("#pending").is(":checked")) {
-                return $("#pending").val();
-            }
-        })();
+      const pending = (function () {
+        if ($('#pending').is(':checked')) {
+          return $('#pending').val()
+        }
+      })()
 
-        var approved = (function () {
-            if ($("#approved").is(":checked")) {
-                return $("#approved").val();
-            }
-        })();
+      const approved = (function () {
+        if ($('#approved').is(':checked')) {
+          return $('#approved').val()
+        }
+      })()
 
-        var rejected = (function () {
-            if ($("#rejected").is(":checked")) {
-                return $("#rejected").val();
-            }
-        })();
+      const rejected = (function () {
+        if ($('#rejected').is(':checked')) {
+          return $('#rejected').val()
+        }
+      })()
 
-        var dead = (function () {
-            if ($("#dead").is(":checked")) {
-                return $("#dead").val();
-            }
-        })();
+      const dead = (function () {
+        if ($('#dead').is(':checked')) {
+          return $('#dead').val()
+        }
+      })()
 
-        var alive = (function () {
-            if ($("#alive").is(":checked")) {
-                return $("#alive").val();
-            }
-        })();
+      const alive = (function () {
+        if ($('#alive').is(':checked')) {
+          return $('#alive').val()
+        }
+      })()
 
-        var reseed = (function () {
-            if ($("#reseed").is(":checked")) {
-                return $("#reseed").val();
-            }
-        })();
+      const reseed = (function () {
+        if ($('#reseed').is(':checked')) {
+          return $('#reseed').val()
+        }
+      })()
 
-        var error = (function () {
-            if ($("#error").is(":checked")) {
-                return $("#error").val();
-            }
-        })();
+      const error = (function () {
+        if ($('#error').is(':checked')) {
+          return $('#error').val()
+        }
+      })()
 
-        var satisfied = (function () {
-            if ($("#satisfied").is(":checked")) {
-                return $("#satisfied").val();
-            }
-        })();
+      const satisfied = (function () {
+        if ($('#satisfied').is(':checked')) {
+          return $('#satisfied').val()
+        }
+      })()
 
-        var notsatisfied = (function () {
-            if ($("#notsatisfied").is(":checked")) {
-                return $("#notsatisfied").val();
-            }
-        })();
+      const notsatisfied = (function () {
+        if ($('#notsatisfied').is(':checked')) {
+          return $('#notsatisfied').val()
+        }
+      })()
 
-        var rewarded = (function () {
-            if ($("#rewarded").is(":checked")) {
-                return $("#rewarded").val();
-            }
-        })();
+      const rewarded = (function () {
+        if ($('#rewarded').is(':checked')) {
+          return $('#rewarded').val()
+        }
+      })()
 
-        var notrewarded = (function () {
-            if ($("#notrewarded").is(":checked")) {
-                return $("#notrewarded").val();
-            }
-        })();
+      const notrewarded = (function () {
+        if ($('#notrewarded').is(':checked')) {
+          return $('#notrewarded').val()
+        }
+      })()
 
-        var dying = (function () {
-            if ($("#dying").is(":checked")) {
-                return $("#dying").val();
-            }
-        })();
+      const dying = (function () {
+        if ($('#dying').is(':checked')) {
+          return $('#dying').val()
+        }
+      })()
 
-        var legendary = (function () {
-            if ($("#legendary").is(":checked")) {
-                return $("#legendary").val();
-            }
-        })();
+      const legendary = (function () {
+        if ($('#legendary').is(':checked')) {
+          return $('#legendary').val()
+        }
+      })()
 
-        var large = (function () {
-            if ($("#large").is(":checked")) {
-                return $("#large").val();
-            }
-        })();
+      const large = (function () {
+        if ($('#large').is(':checked')) {
+          return $('#large').val()
+        }
+      })()
 
-        var huge = (function () {
-            if ($("#huge").is(":checked")) {
-                return $("#huge").val();
-            }
-        })();
+      const huge = (function () {
+        if ($('#huge').is(':checked')) {
+          return $('#huge').val()
+        }
+      })()
 
-        var everyday = (function () {
-            if ($("#everyday").is(":checked")) {
-                return $("#everyday").val();
-            }
-        })();
+      const everyday = (function () {
+        if ($('#everyday').is(':checked')) {
+          return $('#everyday').val()
+        }
+      })()
 
-        var legendary_seeder = (function () {
-            if ($("#legendary_seeder").is(":checked")) {
-                return $("#legendary_seeder").val();
-            }
-        })();
+      const legendary_seeder = (function () {
+        if ($('#legendary_seeder').is(':checked')) {
+          return $('#legendary_seeder').val()
+        }
+      })()
 
-        var mvp_seeder = (function () {
-            if ($("#mvp_seeder").is(":checked")) {
-                return $("#mvp_seeder").val();
-            }
-        })();
+      const mvp_seeder = (function () {
+        if ($('#mvp_seeder').is(':checked')) {
+          return $('#mvp_seeder').val()
+        }
+      })()
 
-        var committed_seeder = (function () {
-            if ($("#committed_seeder").is(":checked")) {
-                return $("#committed_seeder").val();
-            }
-        })();
+      const committed_seeder = (function () {
+        if ($('#committed_seeder').is(':checked')) {
+          return $('#committed_seeder').val()
+        }
+      })()
 
-        var teamplayer_seeder = (function () {
-            if ($("#teamplayer_seeder").is(":checked")) {
-                return $("#teamplayer_seeder").val();
-            }
-        })();
+      const teamplayer_seeder = (function () {
+        if ($('#teamplayer_seeder').is(':checked')) {
+          return $('#teamplayer_seeder').val()
+        }
+      })()
 
-        var participant_seeder = (function () {
-            if ($("#participant_seeder").is(":checked")) {
-                return $("#participant_seeder").val();
-            }
-        })();
+      const participant_seeder = (function () {
+        if ($('#participant_seeder').is(':checked')) {
+          return $('#participant_seeder').val()
+        }
+      })()
 
-        var old = (function () {
-            if ($("#old").is(":checked")) {
-                return $("#old").val();
-            }
-        })();
+      const old = (function () {
+        if ($('#old').is(':checked')) {
+          return $('#old').val()
+        }
+      })()
 
-        var unfilled = (function () {
-            if ($("#unfilled").is(":checked")) {
-                return $("#unfilled").val();
-            }
-        })();
+      const unfilled = (function () {
+        if ($('#unfilled').is(':checked')) {
+          return $('#unfilled').val()
+        }
+      })()
 
-        var filled = (function () {
-            if ($("#filled").is(":checked")) {
-                return $("#filled").val();
-            }
-        })();
+      const filled = (function () {
+        if ($('#filled').is(':checked')) {
+          return $('#filled').val()
+        }
+      })()
 
-        var claimed = (function () {
-            if ($("#claimed").is(":checked")) {
-                return $("#claimed").val();
-            }
-        })();
+      const claimed = (function () {
+        if ($('#claimed').is(':checked')) {
+          return $('#claimed').val()
+        }
+      })()
 
-        var search = $("#search").val();
+      const search = $('#search').val()
 
-        var sorting = $("#sorting").val();
-        var direction = $("#direction").val();
+      const sorting = $('#sorting').val()
+      const direction = $('#direction').val()
 
-        if(userFilterXHR != null) {
+      if(userFilterXHR != null) {
             userFilterXHR.abort();
         }
         userFilterXHR = $.ajax({
-            url: '/'+userName+'.'+userId+'/userFilters',
+            url: '/users/'+userName+'/userFilters',
             data: {
                 _token: this.csrf,
                 page: page,
@@ -365,8 +588,8 @@ class userFilterBuilder {
             });
         });
 
-        var page = 0;
-        if (window.location.hash && window.location.hash.indexOf('page')) {
+      let page = 0
+      if (window.location.hash && window.location.hash.indexOf('page')) {
             page = parseInt(window.location.hash.split('/')[1]);
         }
         if (page && page > 0) {
@@ -401,8 +624,8 @@ class facetedSearchBuilder {
         } else {
             var force = 1;
         }
-        var localXHR = new XMLHttpRequest();
-        localXHR = $.ajax({
+      let localXHR = new XMLHttpRequest()
+      localXHR = $.ajax({
             url: '/filterSettings',
             data: {
                 _token: this.csrf,
@@ -421,96 +644,104 @@ class facetedSearchBuilder {
         } else {
             var search = $("#search").val();
         }
-        var description = $("#description").val();
-        var uploader = $("#uploader").val();
-        var imdb = $("#imdb").val();
-        var tvdb = $("#tvdb").val();
-        var tmdb = $("#tmdb").val();
-        var mal = $("#mal").val();
-        var categories = [];
-        var types = [];
-        var genres = [];
-        var qty = $("#qty").val();
-        var notdownloaded = (function () {
-            if ($("#notdownloaded").is(":checked")) {
-                return $("#notdownloaded").val();
-            }
-        })();
-        var downloaded = (function () {
-            if ($("#downloaded").is(":checked")) {
-                return $("#downloaded").val();
-            }
-        })();
-        var idling = (function () {
-            if ($("#idling").is(":checked")) {
-                return $("#idling").val();
-            }
-        })();
-        var leeching = (function () {
-            if ($("#leeching").is(":checked")) {
-                return $("#leeching").val();
-            }
-        })();
-        var freeleech = (function () {
-            if ($("#freeleech").is(":checked")) {
-                return $("#freeleech").val();
-            }
-        })();
-        var doubleupload = (function () {
-            if ($("#doubleupload").is(":checked")) {
-                return $("#doubleupload").val();
-            }
-        })();
-        var featured = (function () {
-            if ($("#featured").is(":checked")) {
-                return $("#featured").val();
-            }
-        })();
-        var seeding = (function () {
-            if ($("#seeding").is(":checked")) {
-                return $("#seeding").val();
-            }
-        })();
-        var stream = (function () {
-            if ($("#stream").is(":checked")) {
-                return $("#stream").val();
-            }
-        })();
-        var highspeed = (function () {
-            if ($("#highspeed").is(":checked")) {
-                return $("#highspeed").val();
-            }
-        })();
-        var sd = (function () {
-            if ($("#sd").is(":checked")) {
-                return $("#sd").val();
-            }
-        })();
-        var internal = (function () {
-            if ($("#internal").is(":checked")) {
-                return $("#internal").val();
-            }
-        })();
-        var alive = (function () {
-            if ($("#alive").is(":checked")) {
-                return $("#alive").val();
-            }
-        })();
-        var dying = (function () {
-            if ($("#dying").is(":checked")) {
-                return $("#dying").val();
-            }
-        })();
-        var dead = (function () {
-            if ($("#dead").is(":checked")) {
-                return $("#dead").val();
-            }
-        })();
-        $(".category:checked").each(function () {
+      const description = $('#description').val()
+      const keywords = $('#keywords').val()
+      const uploader = $('#uploader').val()
+      const imdb = $('#imdb').val()
+      const tvdb = $('#tvdb').val()
+      const tmdb = $('#tmdb').val()
+      const mal = $('#mal').val()
+      const igdb = $('#igdb').val()
+      const start_year = $('#start_year').val()
+      const end_year = $('#end_year').val()
+      const categories = []
+      const types = []
+      const resolutions = []
+      const genres = []
+      let qty = $('#qty').val()
+      const notdownloaded = (function () {
+        if ($('#notdownloaded').is(':checked')) {
+          return $('#notdownloaded').val()
+        }
+      })()
+      const downloaded = (function () {
+        if ($('#downloaded').is(':checked')) {
+          return $('#downloaded').val()
+        }
+      })()
+      const idling = (function () {
+        if ($('#idling').is(':checked')) {
+          return $('#idling').val()
+        }
+      })()
+      const leeching = (function () {
+        if ($('#leeching').is(':checked')) {
+          return $('#leeching').val()
+        }
+      })()
+      const freeleech = (function () {
+        if ($('#freeleech').is(':checked')) {
+          return $('#freeleech').val()
+        }
+      })()
+      const doubleupload = (function () {
+        if ($('#doubleupload').is(':checked')) {
+          return $('#doubleupload').val()
+        }
+      })()
+      const featured = (function () {
+        if ($('#featured').is(':checked')) {
+          return $('#featured').val()
+        }
+      })()
+      const seeding = (function () {
+        if ($('#seeding').is(':checked')) {
+          return $('#seeding').val()
+        }
+      })()
+      const stream = (function () {
+        if ($('#stream').is(':checked')) {
+          return $('#stream').val()
+        }
+      })()
+      const highspeed = (function () {
+        if ($('#highspeed').is(':checked')) {
+          return $('#highspeed').val()
+        }
+      })()
+      const sd = (function () {
+        if ($('#sd').is(':checked')) {
+          return $('#sd').val()
+        }
+      })()
+      const internal = (function () {
+        if ($('#internal').is(':checked')) {
+          return $('#internal').val()
+        }
+      })()
+      const alive = (function () {
+        if ($('#alive').is(':checked')) {
+          return $('#alive').val()
+        }
+      })()
+      const dying = (function () {
+        if ($('#dying').is(':checked')) {
+          return $('#dying').val()
+        }
+      })()
+      const dead = (function () {
+        if ($('#dead').is(':checked')) {
+          return $('#dead').val()
+        }
+      })()
+      $(".category:checked").each(function () {
             categories.push($(this).val());
         });
         $(".type:checked").each(function () {
             types.push($(this).val());
+        });
+        $(".resolution:checked").each(function () {
+            resolutions.push($(this).val());
         });
         $(".genre:checked").each(function () {
             genres.push($(this).val());
@@ -580,6 +811,7 @@ class facetedSearchBuilder {
                 _token: this.csrf,
                 search: search,
                 description: description,
+                keywords: keywords,
                 uploader: uploader,
                 imdb: imdb,
                 tvdb: tvdb,
@@ -591,8 +823,12 @@ class facetedSearchBuilder {
                 view: this.view,
                 tmdb: tmdb,
                 mal: mal,
+                igdb: igdb,
+                start_year: start_year,
+                end_year: end_year,
                 categories: categories,
                 types: types,
+                resolutions: resolutions,
                 genres: genres,
                 freeleech: freeleech,
                 doubleupload: doubleupload,
@@ -635,9 +871,9 @@ class facetedSearchBuilder {
             $(this).off('click');
             $(this).on('click', function(e) {
                 e.preventDefault();
-                var name = $(this).attr('data-name');
-                var image = $(this).attr('data-image');
-                Swal.fire({
+              const name = $(this).attr('data-name')
+              const image = $(this).attr('data-image')
+              Swal.fire({
                     showConfirmButton: false,
                     showCloseButton: true,
                     background: 'rgb(35,35,35)',
@@ -653,11 +889,11 @@ class facetedSearchBuilder {
         return this.active;
     }
     handle(id) {
-        var trigger = $('#'+id).attr('trigger');
-        this.active = id;
+      const trigger = $('#' + id).attr('trigger')
+      this.active = id;
         if(trigger && trigger == 'keyup') {
-            var length = $('#'+id).val().length;
-            if(length == this.memory[id]) return;
+          const length = $('#' + id).val().length
+          if(length == this.memory[id]) return;
             this.memory[id] = length;
         } else if(trigger && trigger == 'sort') {
             $('.facetedSort').each(function() {
@@ -681,9 +917,9 @@ class facetedSearchBuilder {
     }
     refresh(callback) {
         $('.facetedSearch').each(function() {
-            var trigger = $(this).attr("trigger") ? $(this).attr("trigger") : 'click';
-            var cloner = trigger;
-            if(cloner == 'sort') { cloner='click'; }
+          const trigger = $(this).attr('trigger') ? $(this).attr('trigger') : 'click'
+          let cloner = trigger
+          if(cloner == 'sort') { cloner='click'; }
             $(this).off(cloner);
             $(this).on(cloner, function(e) {
                 if($(this).attr('trigger') == 'sort') {
@@ -699,8 +935,8 @@ class facetedSearchBuilder {
                 if($(this).attr('torrent')) {
                     facetedSearch.put($(this).attr('torrent'));
                     $('.facetedLoading').each(function () {
-                        var check = facetedSearch.get();
-                        if ($(this).attr('torrent') && $(this).attr('torrent') == check) {
+                      const check = facetedSearch.get()
+                      if ($(this).attr('torrent') && $(this).attr('torrent') == check) {
                             $(this).show();
                         }
                     });
@@ -730,24 +966,24 @@ class facetedSearchBuilder {
     init(type) {
         this.type = type;
         if (this.type == 'card') {
-            this.api = '/filterTorrents';
+            this.api = '/torrents/filter';
             this.view = 'card';
         }
         else if (this.type == 'request') {
-            this.api = '/filterRequests';
+            this.api = '/requests/filter';
             this.view = 'request';
         }
         else if (this.type == 'group') {
-            this.api = '/filterTorrents';
+            this.api = '/torrents/filter';
             this.view = 'group';
         }
         else {
-            this.api = '/filterTorrents';
+            this.api = '/torrents/filter';
             this.view = 'list';
         }
 
-        var page = 0;
-        if (window.location.hash && window.location.hash.indexOf('page')) {
+      let page = 0
+      if (window.location.hash && window.location.hash.indexOf('page')) {
             page = parseInt(window.location.hash.split('/')[1]);
         }
         if (page && page > 0) {
@@ -829,86 +1065,6 @@ class forumTipBuilder {
         });
     }
 }
-class configExtensionBuilder {
-    constructor() {
-        this.csrf = document.querySelector("meta[name='csrf-token']").getAttribute("content");
-    }
-    handle(keyv,val) {
-        this.keyv = keyv;
-        this.val = val;
-        this.input = val.replace(/['"]/g,'');
-        Swal.fire({
-            title: 'Change Value',
-            width: '800px',
-            inputAttributes: {
-                autocapitalize: 'off'
-            },
-            html:
-                '<div class="text-left">'+
-                '<input type="text" size="30" id="val_'+configExtension.keyv+'" class="form-control" name="val" value="'+this.input+'" />' +
-                '</div>',
-            showCancelButton: true,
-            confirmButtonText: 'Save',
-            showLoaderOnConfirm: true,
-            preConfirm: () => {
-                this.val = $('#val_'+configExtension.keyv).val();
-                $.ajax({
-                    url: this.update,
-                    data: {
-                        'filePath' : configExtension.path,
-                        'key' : configExtension.keyv,
-                        'value' : ''+String(configExtension.val)+'',
-                    },
-                    beforeSend: function (request){
-                        request.setRequestHeader("X-CSRF-TOKEN", configExtension.csrf);
-                    },
-                    type: 'PUT',
-                    success: function(result) {
-                        $('#key_val_'+configExtension.keyv).html(configExtension.val);
-                        $('#button_'+configExtension.keyv).attr('val',configExtension.val);
-                    }
-                });
-            },
-            allowOutsideClick: false
-        }).then(result => {
-            if (result.value) {
-                Swal.fire({
-                    title: 'Value Has Been Changed',
-                    timer: 1500,
-                    onOpen: () => {
-                        swal.showLoading();
-                    }
-                })
-            }
-        });
-    }
-    init() {
-        $('#configBox').hide();
-        this.view = $('#configExtension').attr('view');
-        this.index = $('#configExtension').attr('index');
-        this.update = $('#configExtension').attr('update');
-        this.file = $('#configExtension').attr('file');
-        this.path = $('#configExtension').attr('path');
-        $('.file-select').off('change');
-        $('.file-select').on('change', function(){
-            var file = $(this).val();
-            if (file) {
-                window.location.href = configExtension.view+"/"+$(this).val();
-            } else {
-                window.location.href = configExtension.index;
-            }
-        });
-        if(this.file == 'yes') {
-            $('.edit').each(function () {
-                $(this).off('click');
-                $(this).on('click', function (e) {
-                    e.preventDefault();
-                    configExtension.handle($(this).attr('keyv'),$(this).attr('val'));
-                });
-            });
-        }
-    }
-}
 class torrentBookmarkBuilder {
     constructor() {
         this.csrf = document.querySelector("meta[name='csrf-token']").getAttribute("content");
@@ -920,10 +1076,10 @@ class torrentBookmarkBuilder {
     }
     update() {
         $('.torrentBookmark').each(function() {
-            var active = $(this).attr("state") ? $(this).attr("state") : 0;
-            var id = $(this).attr("id") ? $(this).attr("id") : 0;
-            var custom = $(this).attr("custom") ? $(this).attr("custom") : '';
-            $(this).off('click');
+          const active = $(this).attr('state') ? $(this).attr('state') : 0
+          const id = $(this).attr('id') ? $(this).attr('id') : 0
+          const custom = $(this).attr('custom') ? $(this).attr('custom') : ''
+          $(this).off('click');
             if(active == 1) {
                 $(this).attr("data-original-title","Unbookmark Torrent");
             } else {
@@ -943,6 +1099,11 @@ class torrentBookmarkBuilder {
         this.destroy(id,custom);
     }
     create(id,custom) {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
 
         if(torrentBookmarkXHR != null) {
             torrentBookmarkXHR.abort();
@@ -951,15 +1112,15 @@ class torrentBookmarkBuilder {
         torrentBookmarkXHR = new XMLHttpRequest();
 
         torrentBookmarkXHR = $.ajax({
-            url: '/torrents/bookmark/' + id,
+            url: '/bookmarks/' + id + '/store',
             data: {
                 _token: this.csrf,
             },
-            type: 'get'
+            type: 'POST'
         }).done(function (e) {
             Swal.fire({
                 position: 'center',
-                type: 'success',
+                icon: 'success',
                 title: 'Torrent Has Been Bookmarked Successfully!',
                 showConfirmButton: false,
                 timer: 4500,
@@ -977,6 +1138,11 @@ class torrentBookmarkBuilder {
         });
     }
     destroy(id,custom) {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
 
         if(torrentBookmarkXHR != null) {
             return;
@@ -985,15 +1151,16 @@ class torrentBookmarkBuilder {
         torrentBookmarkXHR = new XMLHttpRequest();
 
         torrentBookmarkXHR = $.ajax({
-            url: '/torrents/unbookmark/' + id,
+            url: '/bookmarks/' + id + '/destroy',
             data: {
                 _token: this.csrf,
+                _method: 'DELETE',
             },
-            type: 'get'
+            type: 'POST'
         }).done(function (e) {
             Swal.fire({
                 position: 'center',
-                type: 'success',
+                icon: 'success',
                 title: 'Torrent Has Been Unbookmarked Successfully!',
                 showConfirmButton: false,
                 timer: 4500,
@@ -1021,7 +1188,6 @@ $(document).ajaxComplete(function () {
 $(document).ready(function () {
     if (document.getElementById('request-form-description')) {
         $('#request-form-description').wysibb({});
-        emoji.textcomplete()
     }
     if($('#comments').length > 0) {
         if (window.location.hash && window.location.hash.substring) {
@@ -1033,11 +1199,10 @@ $(document).ready(function () {
     }
     if($('#upload-form-description').length > 0) {
         $('#upload-form-description').wysibb({});
-        emoji.textcomplete()
     }
     if(document.getElementById('facetedSearch')) {
-        var facetedType = document.getElementById('facetedSearch').getAttribute('type');
-        facetedSearch.init(facetedType);
+      const facetedType = document.getElementById('facetedSearch').getAttribute('type')
+      facetedSearch.init(facetedType);
     }
     if(document.getElementById('userFilter')) {
         userFilter.init();
@@ -1067,16 +1232,16 @@ $(document).on('click', '.pagination a', function (e) {
 
         e.preventDefault();
 
-        var sub = null;
-        if (window.location.hash && window.location.hash.substring) {
+      let sub = null
+      if (window.location.hash && window.location.hash.substring) {
             sub = window.location.hash.substring(1).split('/')[0];
         }
         if (!sub) {
             sub = 'page';
         }
-        var link_url = $(this).attr('href');
-        var page = parseInt(link_url.split('page=')[1]);
-        var url = (window.location.href.split("#")[0]) + '#' + sub + '/' + page;
+      const link_url = $(this).attr('href')
+      const page = parseInt(link_url.split('page=')[1])
+      var url = (window.location.href.split("#")[0]) + '#' + sub + '/' + page;
         if (window.history && window.history.pushState) {
             window.history.pushState("", "", url);
         }
@@ -1092,8 +1257,8 @@ $(document).on('click', '.pagination a', function (e) {
 $(document).mousedown(function(){
     if(audioLoaded == 0) {
         window.sounds = new Object();
-        var sound = new Audio('/sounds/alert.mp3');
-        sound.load();
+      const sound = new Audio('/sounds/alert.mp3')
+      sound.load();
         window.sounds['alert.mp3'] = sound;
     }
     audioLoaded = 1;
@@ -1110,7 +1275,6 @@ const torrentBookmark = new torrentBookmarkBuilder();
 const userFilter = new userFilterBuilder();
 const forumTip = new forumTipBuilder();
 const userExtension = new userExtensionBuilder();
-const configExtension = new configExtensionBuilder();
 const uploadExtension = new uploadExtensionBuilder();
 var userFilterXHR = null;
 var facetedSearchXHR = null;

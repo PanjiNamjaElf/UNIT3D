@@ -2,25 +2,28 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     Mr.G
  */
 
 namespace App\Console\Commands;
 
-use App\Models\Ban;
 use App\Mail\BanUser;
+use App\Models\Ban;
 use App\Models\Group;
 use App\Models\Warning;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * @see \Tests\Unit\Console\Commands\AutoBanTest
+ */
 class AutoBan extends Command
 {
     /**
@@ -40,17 +43,20 @@ class AutoBan extends Command
     /**
      * Execute the console command.
      *
+     * @throws \Exception
+     *
      * @return mixed
      */
     public function handle()
     {
-        $bannedGroup = Group::select(['id'])->where('slug', '=', 'banned')->first();
-        $bans = Warning::with('warneduser')->select(DB::raw('user_id, count(*) as value'))->where('active', '=', 1)->groupBy('user_id')->having('value', '>=', config('hitrun.max_warnings'))->get();
+        $banned_group = \cache()->rememberForever('banned_group', fn () => Group::where('slug', '=', 'banned')->pluck('id'));
+
+        $bans = Warning::with('warneduser')->select(DB::raw('user_id, count(*) as value'))->where('active', '=', 1)->groupBy('user_id')->having('value', '>=', \config('hitrun.max_warnings'))->get();
 
         foreach ($bans as $ban) {
-            if ($ban->warneduser->group_id != $bannedGroup->id && ! $ban->warneduser->group->is_immune) {
+            if ($ban->warneduser->group_id != $banned_group[0] && ! $ban->warneduser->group->is_immune) {
                 // If User Has x or More Active Warnings Ban Set The Users Group To Banned
-                $ban->warneduser->group_id = $bannedGroup->id;
+                $ban->warneduser->group_id = $banned_group[0];
                 $ban->warneduser->can_upload = 0;
                 $ban->warneduser->can_download = 0;
                 $ban->warneduser->can_comment = 0;
@@ -71,5 +77,6 @@ class AutoBan extends Command
                 Mail::to($ban->warneduser->email)->send(new BanUser($ban->warneduser->email, $logban));
             }
         }
+        $this->comment('Automated User Banning Command Complete');
     }
 }

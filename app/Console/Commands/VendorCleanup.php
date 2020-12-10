@@ -1,12 +1,26 @@
 <?php
+/**
+ * NOTICE OF LICENSE.
+ *
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
+ * The details is bundled with this project in the file LICENSE.txt.
+ *
+ * @project    UNIT3D Community Edition
+ *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
+ * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
+ */
 
 namespace App\Console\Commands;
 
 use FilesystemIterator;
-use RecursiveIteratorIterator;
 use Illuminate\Console\Command;
 use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
+/**
+ * @see \Tests\Todo\Unit\Console\Commands\VendorCleanupTest
+ */
 class VendorCleanup extends Command
 {
     protected $signature = 'vendor:cleanup {--check : Runs in dry mode without deleting files.}';
@@ -55,6 +69,7 @@ class VendorCleanup extends Command
             'Makefile',
             '.keep',
         ];
+
     /**
      * List of File and Folders Patters Going To Be Excluded.
      *
@@ -79,23 +94,25 @@ class VendorCleanup extends Command
      */
     public function handle()
     {
-        $patterns = array_diff($this->patterns, $this->excluded);
+        $patterns = \array_diff($this->patterns, $this->excluded);
 
-        $directories = $this->expandDirectoryTree(base_path('vendor'));
+        $directories = $this->expandDirectoryTree(\base_path('vendor'));
 
         $isDry = $this->option('check');
 
         foreach ($directories as $directory) {
             foreach ($patterns as $pattern) {
-                $casePattern = preg_replace_callback('/([a-z])/i', [$this, 'prepareWord'], $pattern);
+                $casePattern = \preg_replace_callback('#([a-z])#i', function ($matches) {
+                    return $this->prepareWord($matches);
+                }, $pattern);
 
-                $files = glob($directory.'/'.$casePattern, GLOB_BRACE);
+                $files = \glob($directory.'/'.$casePattern, GLOB_BRACE);
 
                 if (! $files) {
                     continue;
                 }
 
-                $files = array_diff($files, $this->excluded);
+                $files = \array_diff($files, $this->excluded);
 
                 foreach ($this->excluded as $excluded) {
                     $key = $this->arrayFind($excluded, $files);
@@ -106,7 +123,7 @@ class VendorCleanup extends Command
                     }
                 }
                 foreach ($files as $file) {
-                    if (is_dir($file)) {
+                    if (\is_dir($file)) {
                         $this->out('DELETING DIR: '.$file);
                         if (! $isDry) {
                             $this->delTree($file);
@@ -114,7 +131,7 @@ class VendorCleanup extends Command
                     } else {
                         $this->out('DELETING FILE: '.$file);
                         if (! $isDry) {
-                            @unlink($file);
+                            @\unlink($file);
                         }
                     }
                 }
@@ -126,18 +143,19 @@ class VendorCleanup extends Command
     /**
      * Recursively traverses the directory tree.
      *
-     * @param  string $dir
+     * @param string $dir
+     *
      * @return array
      */
     protected function expandDirectoryTree($dir)
     {
         $directories = [];
-        $files = array_diff(scandir($dir), ['.', '..']);
+        $files = \array_diff(\scandir($dir), ['.', '..']);
         foreach ($files as $file) {
             $directory = $dir.'/'.$file;
-            if (is_dir($directory)) {
+            if (\is_dir($directory)) {
                 $directories[] = $directory;
-                $directories = array_merge($directories, $this->expandDirectoryTree($directory));
+                $directories = \array_merge($directories, $this->expandDirectoryTree($directory));
             }
         }
 
@@ -147,12 +165,13 @@ class VendorCleanup extends Command
     /**
      * Recursively deletes the directory.
      *
-     * @param  string $dir
+     * @param string $dir
+     *
      * @return bool
      */
     protected function delTree($dir)
     {
-        if (! file_exists($dir) || ! is_dir($dir)) {
+        if (! \file_exists($dir) || ! \is_dir($dir)) {
             return false;
         }
         $iterator = new RecursiveIteratorIterator(
@@ -161,29 +180,30 @@ class VendorCleanup extends Command
         );
         foreach ($iterator as $filename => $fileInfo) {
             if ($fileInfo->isDir()) {
-                @rmdir($filename);
+                @\rmdir($filename);
             } else {
-                @unlink($filename);
+                @\unlink($filename);
             }
         }
-        @rmdir($dir);
+        @\rmdir($dir);
     }
 
     /**
      * Prepare word.
      *
-     * @param  string $matches
+     * @param string $matches
+     *
      * @return string
      */
     protected function prepareWord($matches)
     {
-        return '['.strtolower($matches[1]).strtoupper($matches[1]).']';
+        return '['.\strtolower($matches[1]).\strtoupper($matches[1]).']';
     }
 
     protected function arrayFind($needle, array $haystack)
     {
         foreach ($haystack as $key => $value) {
-            if (false !== stripos($value, $needle)) {
+            if (false !== \stripos($value, $needle)) {
                 return $key;
             }
         }

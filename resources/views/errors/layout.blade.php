@@ -14,30 +14,26 @@
     <meta property="og:url" content="{{ url('/') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!--icons -->
     <link rel="shortcut icon" href="{{ url('/favicon.ico') }}" type="image/x-icon">
     <link rel="icon" href="{{ url('/favicon.ico') }}" type="image/x-icon">
-    <!--icons -->
 
-    <!--css -->
-    <link rel="stylesheet" href="{{ url('css/app.css') }}"/>
-    <!--css -->
+    <link rel="stylesheet" href="{{ url('css/app.css') }}" />
 </head>
 
 <body>
-<section class="container content" id="content-area" style="min-height: 344px;">
-    <div class="jumbotron shadowed">
-        <div class="container">
-            @yield('container')
+    <section class="container content" id="content-area" style="min-height: 344px;">
+        <div class="jumbotron shadowed">
+            <div class="container">
+                @yield('container')
 
-            <p class="text-center">
-                <a href="{{ url('/') }}" role="button" class="btn btn-labeled btn-primary">
-                    <i class="{{ config('other.font-awesome') }} fa-home"></i> Go Home
-                </a>
-            </p>
+                <p class="text-center">
+                    <a href="{{ url('/') }}" role="button" class="btn btn-labeled btn-primary">
+                        <i class="{{ config('other.font-awesome') }} fa-home"></i> Go Home
+                    </a>
+                </p>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 </body>
 
 </html>

@@ -2,63 +2,67 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Controllers\Staff;
 
-use App\Models\Poll;
-use App\Models\Option;
-use App\Http\Requests\StorePoll;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StorePoll;
+use App\Models\Option;
+use App\Models\Poll;
 use App\Repositories\ChatRepository;
 
+/**
+ * @see \Tests\Todo\Feature\Http\Controllers\Staff\PollControllerTest
+ */
 class PollController extends Controller
 {
     /**
      * @var ChatRepository
      */
-    private $chat;
+    private $chatRepository;
 
     /**
      * PollController Constructor.
      *
-     * @param ChatRepository $chat
+     * @param \App\Repositories\ChatRepository $chatRepository
      */
-    public function __construct(ChatRepository $chat)
+    public function __construct(ChatRepository $chatRepository)
     {
-        $this->chat = $chat;
+        $this->chatRepository = $chatRepository;
     }
 
     /**
-     * Show All Polls.
+     * Display All Polls.
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function polls()
+    public function index()
     {
         $polls = Poll::latest()->paginate(25);
 
-        return view('Staff.poll.polls', ['polls' => $polls]);
+        return \view('Staff.poll.index', ['polls' => $polls]);
     }
 
     /**
      * Show A Poll.
      *
-     * @param $id
+     * @param \App\Models\Poll $id
+     *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function poll($id)
+    public function show($id)
     {
         $poll = Poll::where('id', '=', $id)->firstOrFail();
 
-        return view('Staff.poll.poll', ['poll' => $poll]);
+        return \view('Staff.poll.show', ['poll' => $poll]);
     }
 
     /**
@@ -68,41 +72,124 @@ class PollController extends Controller
      */
     public function create()
     {
-        return view('Staff.poll.create');
+        return \view('Staff.poll.create');
     }
 
     /**
-     * Add A Poll.
+     * Store A New Poll.
      *
-     * @param StorePoll $request
+     * @param \App\Http\Requests\StorePoll $storePoll
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(StorePoll $request)
+    public function store(StorePoll $storePoll)
     {
-        $user = $request->user();
+        $user = $storePoll->user();
 
-        if ($request->user()) {
-            $poll = $user->polls()->create($request->all());
-        } else {
-            $poll = Poll::create($request->all());
-        }
+        $poll = $storePoll->user() ? $user->polls()->create($storePoll->all()) : Poll::create($storePoll->all());
 
-        $options = collect($request->input('options'))->map(function ($value) {
-            return new Option(['name' => $value]);
-        });
+        $options = \collect($storePoll->input('options'))->map(fn ($value) => new Option(['name' => $value]));
         $poll->options()->saveMany($options);
 
-        // Activity Log
-        \LogActivity::addToLog("Staff Member {$user->username} has created a new poll {$poll->title}.");
+        $poll_url = \href_poll($poll);
 
-        $poll_url = hrefPoll($poll);
-
-        $this->chat->systemMessage(
-            "A new poll has been created [url={$poll_url}]{$poll->title}[/url] vote on it now! :slight_smile:"
+        $this->chatRepository->systemMessage(
+            \sprintf('A new poll has been created [url=%s]%s[/url] vote on it now! :slight_smile:', $poll_url, $poll->title)
         );
 
-        return redirect('poll/'.$poll->slug)
+        return \redirect()->route('staff.polls.index')
             ->withSuccess('Your poll has been created.');
+    }
+
+    /**
+     * Poll Edit Form.
+     *
+     * @param \App\Models\Poll $id
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function edit($id)
+    {
+        $poll = Poll::findOrFail($id);
+
+        return \view('Staff.poll.edit', ['poll' => $poll]);
+    }
+
+    /**
+     * Update A New Poll.
+     *
+     * @param \App\Http\Requests\StorePoll $storePoll
+     * @param                              $id
+     *
+     * @throws \Exception
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function update(StorePoll $storePoll, $id)
+    {
+        $poll = Poll::findOrFail($id);
+
+        $poll->title = $storePoll->input('title');
+
+        $poll->multiple_choice = (bool) $storePoll->input('multiple_choice');
+
+        // Remove the deleted options in poll
+        $oldOptionIds = \collect($poll->options)->map(fn ($option) => $option->id)->all();
+
+        $existingOldOptionIds = \collect($storePoll->input('option-id'))->map(fn ($id) => (int) $id)->all();
+
+        $idsOfOptionToBeRemove = \array_diff($oldOptionIds, $existingOldOptionIds);
+
+        foreach ($idsOfOptionToBeRemove as $id) {
+            $option = Option::findOrFail($id);
+            $option->delete();
+        }
+
+        // Update existing options
+        $existingOldOptionContents = \collect($storePoll->input('option-content'))->map(fn ($content) => (string) $content)->all();
+
+        if (\count($existingOldOptionContents) === \count($existingOldOptionIds)) {
+            $len = \count($existingOldOptionContents);
+            for ($i = 0; $i < $len; $i++) {
+                $option = Option::findOrFail($existingOldOptionIds[$i]);
+                $option->name = $existingOldOptionContents[$i];
+                $option->save();
+            }
+        }
+
+        // Insert new options
+        $newOptions = \collect($storePoll->input('new-option-content'))->map(fn ($content) => new Option(['name' => $content]));
+
+        $poll->options()->saveMany($newOptions);
+
+        // Last work from store()
+        $poll_url = \href_poll($poll);
+
+        $this->chatRepository->systemMessage(
+            \sprintf('A poll has been updated [url=%s]%s[/url] vote on it now! :slight_smile:', $poll_url, $poll->title)
+        );
+
+        $poll->save();
+
+        return \redirect()->route('staff.polls.index')
+            ->withSuccess('Your poll has been edited.');
+    }
+
+    /**
+     * Delete A Poll.
+     *
+     * @param \App\Models\Poll $id
+     *
+     * @throws \Exception
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy($id)
+    {
+        $poll = Poll::findOrFail($id);
+        $poll->delete();
+
+        return \redirect()->route('staff.polls.index')
+            ->withSuccess('Poll has successfully been deleted');
     }
 }

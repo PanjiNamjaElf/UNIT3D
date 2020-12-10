@@ -2,34 +2,37 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Controllers\Staff;
 
-use App\Models\Page;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Page;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
+/**
+ * @see \Tests\Todo\Feature\Http\Controllers\PageControllerTest
+ */
 class PageController extends Controller
 {
     /**
-     * Get All Pages.
+     * Display All Pages.
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function index()
     {
-        $page = Page::all();
+        $pages = Page::all();
 
-        return view('Staff.page.index', ['page' => $page]);
+        return \view('Staff.page.index', ['pages' => $pages]);
     }
 
     /**
@@ -37,103 +40,100 @@ class PageController extends Controller
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function addForm()
+    public function create()
     {
-        return view('Staff.page.add');
+        return \view('Staff.page.create');
     }
 
     /**
-     * Add A Page.
+     * Store A New Page.
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function add(Request $request)
+    public function store(Request $request)
     {
         $page = new Page();
         $page->name = $request->input('name');
         $page->slug = Str::slug($page->name);
         $page->content = $request->input('content');
 
-        $v = validator($page->toArray(), [
+        $v = \validator($page->toArray(), [
             'name'    => 'required',
             'slug'    => 'required',
             'content' => 'required',
         ]);
 
         if ($v->fails()) {
-            return redirect()->route('staff_page_index')
+            return \redirect()->route('staff.pages.index')
                 ->withErrors($v->errors());
-        } else {
-            $page->save();
-
-            return redirect()->route('staff_page_index')
-                ->withSuccess('Page has been created successfully');
         }
+        $page->save();
+
+        return \redirect()->route('staff.pages.index')
+            ->withSuccess('Page has been created successfully');
     }
 
     /**
      * Page Edit Form.
      *
-     * @param $slug
-     * @param $id
+     * @param \App\Models\Page $id
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function editForm($slug, $id)
+    public function edit($id)
     {
         $page = Page::findOrFail($id);
 
-        return view('Staff.page.edit', ['page' => $page]);
+        return \view('Staff.page.edit', ['page' => $page]);
     }
 
     /**
      * Edit A Page.
      *
      * @param \Illuminate\Http\Request $request
-     * @param $slug
-     * @param $id
+     * @param \App\Models\Page         $id
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function edit(Request $request, $slug, $id)
+    public function update(Request $request, $id)
     {
         $page = Page::findOrFail($id);
         $page->name = $request->input('name');
         $page->slug = Str::slug($page->name);
         $page->content = $request->input('content');
 
-        $v = validator($page->toArray(), [
+        $v = \validator($page->toArray(), [
             'name'    => 'required',
             'slug'    => 'required',
             'content' => 'required',
         ]);
 
         if ($v->fails()) {
-            return redirect()->route('staff_page_index')
+            return \redirect()->route('staff.pages.index')
                 ->withErrors($v->errors());
-        } else {
-            $page->save();
-
-            return redirect()->route('staff_page_index')
-                ->withSuccess('Page has been edited successfully');
         }
+        $page->save();
+
+        return \redirect()->route('staff.pages.index')
+            ->withSuccess('Page has been edited successfully');
     }
 
     /**
      * Delete A Page.
      *
-     * @param $slug
-     * @param $id
+     * @param \App\Models\Page $id
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @throws \Exception
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function delete($slug, $id)
+    public function destroy($id)
     {
         Page::findOrFail($id)->delete();
 
-        return redirect()->route('staff_page_index')
+        return \redirect()->route('staff.pages.index')
             ->withSuccess('Page has been deleted successfully');
     }
 }

@@ -1,4 +1,15 @@
 <?php
+/**
+ * NOTICE OF LICENSE.
+ *
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
+ * The details is bundled with this project in the file LICENSE.txt.
+ *
+ * @project    UNIT3D Community Edition
+ *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
+ * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
+ */
 
 return [
     /*
@@ -25,7 +36,7 @@ return [
     'between'              => [
         'numeric' => ':attribute deve trovarsi tra :min - :max.',
         'file'    => ':attribute deve trovarsi tra :min - :max kilobyte.',
-        'string'  => ':attribute deve trovarsi tra :min - :max caratteri.',
+        'string'  => ':attribute di :min - :max caratteri',
         'array'   => ':attribute deve avere tra :min - :max elementi.',
     ],
     'boolean'              => 'Il campo :attribute deve essere vero o falso.',
@@ -110,7 +121,7 @@ return [
     'starts_with'          => ':attribute deve iniziare con uno dei seguenti: :values',
     'string'               => ':attribute deve essere una stringa.',
     'timezone'             => ':attribute deve essere una zona valida.',
-    'unique'               => ':attribute è stato già utilizzato.',
+    'unique'               => ':attribute già utilizzato',
     'uploaded'             => ':attribute non è stato caricato.',
     'url'                  => 'Il formato del campo :attribute non è valido.',
     'uuid'                 => ':attribute deve essere un UUID valido.',

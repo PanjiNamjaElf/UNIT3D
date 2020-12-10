@@ -2,49 +2,29 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Providers;
 
-use App\Models\Page;
-use Illuminate\View\View;
+use App\Helpers\ByteUnits;
+use App\Helpers\HiddenCaptcha;
+use App\Interfaces\ByteUnitsInterface;
 use App\Interfaces\WishInterface;
+use App\Models\Page;
 use App\Repositories\WishRepository;
-use App\Services\Clients\OmdbClient;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\View;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap any application services.
-     *
-     * @return void
-     */
-    public function boot()
-    {
-        // ReCaptcha
-        validator()->extend('recaptcha', 'App\Validators\ReCaptcha@validate');
-
-        // Custom validation for the email whitelist/blacklist
-        validator()->extend('email_list', 'App\Validators\EmailValidator@validateEmailList');
-
-        // Share $pages across all views
-        view()->composer('*', function (View $view) {
-            $pages = cache()->remember('cached-pages', 3600, function () {
-                return Page::select(['id', 'name', 'slug'])->take(6)->get();
-            });
-
-            $view->with(compact('pages'));
-        });
-    }
-
     /**
      * Register any application services.
      *
@@ -56,14 +36,54 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // we can now inject this class and it will auto resolve for us
-        $this->app->bind(OmdbClient::class, function ($app) {
-            $key = config('api-keys.omdb');
+        // Wish
+        $this->app->bind(WishInterface::class, WishRepository::class);
 
-            return new OmdbClient($key);
+        // Hidden Captcha
+        $this->app->bind('hiddencaptcha', \App\Helpers\HiddenCaptcha::class);
+
+        $this->app->bind(ByteUnitsInterface::class, ByteUnits::class);
+    }
+
+    /**
+     * Bootstrap any application services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        // User Observer For Cache
+        //User::observe(UserObserver::class);
+
+        // Torrent Observer For Cache
+        //Torrent::observe(TorrentObserver::class);
+
+        // Share $footer_pages across all views
+        \view()->composer('*', function (View $view) {
+            $footer_pages = \cache()->remember('cached-pages', 3_600, fn () => Page::select(['id', 'name', 'slug', 'created_at'])->take(6)->get());
+
+            $view->with(['footer_pages' => $footer_pages]);
         });
 
-        // registering a interface to a concrete class, so we can inject the interface
-        $this->app->bind(WishInterface::class, WishRepository::class);
+        // Boostrap Pagination
+        \Illuminate\Pagination\Paginator::useBootstrap();
+
+        // Hidden Captcha
+        Blade::directive('hiddencaptcha', fn ($mustBeEmptyField = '_username') => \sprintf('<?= App\Helpers\HiddenCaptcha::render(%s); ?>', $mustBeEmptyField));
+
+        $this->app['validator']->extendImplicit(
+            'hiddencaptcha',
+            function ($attribute, $value, $parameters, $validator) {
+                $minLimit = (isset($parameters[0]) && \is_numeric($parameters[0])) ? $parameters[0] : 0;
+                $maxLimit = (isset($parameters[1]) && \is_numeric($parameters[1])) ? $parameters[1] : 1_200;
+                if (! HiddenCaptcha::check($validator, $minLimit, $maxLimit)) {
+                    $validator->setCustomMessages(['hiddencaptcha' => 'Captcha error']);
+
+                    return false;
+                }
+
+                return true;
+            }
+        );
     }
 }

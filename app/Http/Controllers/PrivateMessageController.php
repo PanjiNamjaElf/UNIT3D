@@ -2,21 +2,24 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Controllers;
 
+use App\Models\PrivateMessage;
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Models\PrivateMessage;
 
+/**
+ * @see \Tests\Todo\Feature\Http\Controllers\PrivateMessageControllerTest
+ */
 class PrivateMessageController extends Controller
 {
     /**
@@ -33,7 +36,7 @@ class PrivateMessageController extends Controller
             ['subject', 'like', '%'.$request->input('subject').'%'],
         ])->latest()->paginate(20);
 
-        return view('pm.inbox', ['pms' => $pms, 'user' => $user]);
+        return \view('pm.inbox', ['pms' => $pms, 'user' => $user]);
     }
 
     /**
@@ -50,11 +53,13 @@ class PrivateMessageController extends Controller
             ['subject', 'like', '%'.$request->input('subject').'%'],
         ])->latest()->paginate(20);
 
-        return view('pm.outbox', ['pms' => $pms, 'user' => $user]);
+        return \view('pm.outbox', ['pms' => $pms, 'user' => $user]);
     }
 
     /**
      * View Inbox.
+     *
+     * @param \Illuminate\Http\Request $request
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
@@ -63,11 +68,13 @@ class PrivateMessageController extends Controller
         $user = $request->user();
         $pms = PrivateMessage::where('receiver_id', '=', $user->id)->latest()->paginate(25);
 
-        return view('pm.inbox', ['pms' => $pms, 'user' => $user]);
+        return \view('pm.inbox', ['pms' => $pms, 'user' => $user]);
     }
 
     /**
      * View Outbox.
+     *
+     * @param \Illuminate\Http\Request $request
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
@@ -76,13 +83,14 @@ class PrivateMessageController extends Controller
         $user = $request->user();
         $pms = PrivateMessage::where('sender_id', '=', $user->id)->latest()->paginate(20);
 
-        return view('pm.outbox', ['pms' => $pms, 'user' => $user]);
+        return \view('pm.outbox', ['pms' => $pms, 'user' => $user]);
     }
 
     /**
      * View A Message.
      *
-     * @param $id
+     * @param \Illuminate\Http\Request   $request
+     * @param \App\Models\PrivateMessage $id
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
@@ -97,26 +105,27 @@ class PrivateMessageController extends Controller
                 $pm->save();
             }
 
-            return view('pm.message', ['pm' => $pm, 'user' => $user]);
-        } else {
-            return redirect()->route('inbox')
-                ->withErrors('What Are You Trying To Do Here!');
+            return \view('pm.message', ['pm' => $pm, 'user' => $user]);
         }
+
+        return \redirect()->route('inbox')
+            ->withErrors('What Are You Trying To Do Here!');
     }
 
     /**
      * Create Message Form.
      *
-     * @param  string  $receiver_id
+     * @param \Illuminate\Http\Request $request
+     * @param string                   $receiver_id
+     * @param string                   $username
      *
-     * @param  string  $username
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function makePrivateMessage(Request $request, $receiver_id = '', $username = '')
     {
         $user = $request->user();
 
-        return view('pm.send', ['user' => $user, 'receiver_id' => $receiver_id, 'username' => $username]);
+        return \view('pm.send', ['user' => $user, 'receiver_id' => $receiver_id, 'username' => $username]);
     }
 
     /**
@@ -124,7 +133,7 @@ class PrivateMessageController extends Controller
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function sendPrivateMessage(Request $request)
     {
@@ -138,18 +147,18 @@ class PrivateMessageController extends Controller
         if ($request->has('receiver_id')) {
             $recipient = User::where('username', '=', $request->input('receiver_id'))->firstOrFail();
         } else {
-            return redirect()->route('create', ['username' => $request->user()->username, 'id' => $request->user()->id])
+            return \redirect()->route('create', ['username' => $request->user()->username, 'id' => $request->user()->id])
                 ->withErrors($v->errors());
         }
 
-        $pm = new PrivateMessage();
-        $pm->sender_id = $user->id;
-        $pm->receiver_id = $recipient->id;
-        $pm->subject = $request->input('subject');
-        $pm->message = $request->input('message');
-        $pm->read = 0;
+        $privateMessage = new PrivateMessage();
+        $privateMessage->sender_id = $user->id;
+        $privateMessage->receiver_id = $recipient->id;
+        $privateMessage->subject = $request->input('subject');
+        $privateMessage->message = $request->input('message');
+        $privateMessage->read = 0;
 
-        $v = validator($pm->toArray(), [
+        $v = \validator($privateMessage->toArray(), [
             'sender_id'   => 'required',
             'receiver_id' => 'required',
             'subject'     => 'required',
@@ -159,31 +168,30 @@ class PrivateMessageController extends Controller
 
         if ($v->fails()) {
             if ($dest == 'profile') {
-                return redirect()->route('profile', ['username' => $recipient->slug, 'id'=> $recipient->id])
+                return \redirect()->route('users.show', ['username' => $recipient->username])
                     ->withErrors($v->errors());
             }
 
-            return redirect()->route('create', ['username' => $request->user()->username, 'id' => $request->user()->id])
+            return \redirect()->route('create', ['username' => $request->user()->username, 'id' => $request->user()->id])
                 ->withErrors($v->errors());
-        } else {
-            $pm->save();
-            if ($dest == 'profile') {
-                return redirect()->route('profile', ['username' => $recipient->slug, 'id'=> $recipient->id])
-                    ->withSuccess('Your PM Was Sent Successfully!');
-            }
-
-            return redirect()->route('inbox')
+        }
+        $privateMessage->save();
+        if ($dest == 'profile') {
+            return \redirect()->route('users.show', ['username' => $recipient->username])
                 ->withSuccess('Your PM Was Sent Successfully!');
         }
+
+        return \redirect()->route('inbox')
+            ->withSuccess('Your PM Was Sent Successfully!');
     }
 
     /**
      * Reply To A Message.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param $id
+     * @param \Illuminate\Http\Request   $request
+     * @param \App\Models\PrivateMessage $id
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function replyPrivateMessage(Request $request, $id)
     {
@@ -191,15 +199,15 @@ class PrivateMessageController extends Controller
 
         $message = PrivateMessage::where('id', '=', $id)->firstOrFail();
 
-        $pm = new PrivateMessage();
-        $pm->sender_id = $user->id;
-        $pm->receiver_id = $message->sender_id;
-        $pm->subject = $message->subject;
-        $pm->message = $request->input('message');
-        $pm->related_to = $message->id;
-        $pm->read = 0;
+        $privateMessage = new PrivateMessage();
+        $privateMessage->sender_id = $user->id;
+        $privateMessage->receiver_id = $message->sender_id == $user->id ? $message->receiver_id : $message->sender_id;
+        $privateMessage->subject = $message->subject;
+        $privateMessage->message = $request->input('message');
+        $privateMessage->related_to = $message->id;
+        $privateMessage->read = 0;
 
-        $v = validator($pm->toArray(), [
+        $v = \validator($privateMessage->toArray(), [
             'sender_id'   => 'required',
             'receiver_id' => 'required',
             'subject'     => 'required',
@@ -209,43 +217,72 @@ class PrivateMessageController extends Controller
         ]);
 
         if ($v->fails()) {
-            return redirect()->route('inbox')
+            return \redirect()->route('inbox')
                 ->withErrors($v->errors());
-        } else {
-            $pm->save();
-
-            return redirect()->route('inbox')
-                ->withSuccess('Your PM Was Sent Successfully!');
         }
+        $privateMessage->save();
+
+        return \redirect()->route('inbox')
+            ->withSuccess('Your PM Was Sent Successfully!');
     }
 
     /**
      * Delete A Message.
      *
-     * @param $id
+     * @param \Illuminate\Http\Request   $request
+     * @param \App\Models\PrivateMessage $id
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @throws \Exception
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function deletePrivateMessage(Request $request, $id)
     {
         $user = $request->user();
         $pm = PrivateMessage::where('id', '=', $id)->firstOrFail();
 
+        $dest = 'default';
+        if ($request->has('dest') && $request->input('dest') == 'outbox') {
+            $dest = 'outbox';
+        }
+
         if ($pm->sender_id == $user->id || $pm->receiver_id == $user->id) {
             $pm->delete();
 
-            return redirect()->route('inbox')
+            if ($dest == 'outbox') {
+                return \redirect()->route('outbox')->withSuccess('PM Was Deleted Successfully!');
+            }
+
+            return \redirect()->route('inbox')
                 ->withSuccess('PM Was Deleted Successfully!');
-        } else {
-            return redirect()->route('inbox')
-                ->withErrors('What Are You Trying To Do Here!');
         }
+
+        return \redirect()->route('inbox')
+                ->withErrors('What Are You Trying To Do Here!');
+    }
+
+    /**
+     * Empty Private Message Inbox.
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function emptyInbox(Request $request)
+    {
+        $user = $request->user();
+        $pms = PrivateMessage::where('receiver_id', '=', $user->id)->delete();
+
+        return \redirect()->route('inbox')
+                ->withSuccess('PM Was Deleted Successfully!');
     }
 
     /**
      * Mark All Messages As Read.
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function markAllAsRead(Request $request)
     {
@@ -256,7 +293,7 @@ class PrivateMessageController extends Controller
             $pm->save();
         }
 
-        return redirect()->route('inbox')
+        return \redirect()->route('inbox')
             ->withSuccess('Your Messages Have All Been Marked As Read!');
     }
 }

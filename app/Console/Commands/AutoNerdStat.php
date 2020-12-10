@@ -2,38 +2,41 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Console\Commands;
 
-use Carbon\Carbon;
 use App\Models\Ban;
 use App\Models\Peer;
-use App\Models\User;
 use App\Models\Torrent;
+use App\Models\User;
 use App\Models\Warning;
-use Illuminate\Console\Command;
 use App\Repositories\ChatRepository;
+use Carbon\Carbon;
+use Illuminate\Console\Command;
 
+/**
+ * @see \Tests\Todo\Unit\Console\Commands\AutoNerdStatTest
+ */
 class AutoNerdStat extends Command
 {
     /**
      * @var ChatRepository
      */
-    private $chat;
+    private $chatRepository;
 
-    public function __construct(ChatRepository $chat)
+    public function __construct(ChatRepository $chatRepository)
     {
         parent::__construct();
 
-        $this->chat = $chat;
+        $this->chatRepository = $chatRepository;
     }
 
     /**
@@ -53,95 +56,80 @@ class AutoNerdStat extends Command
     /**
      * Execute the console command.
      *
+     * @throws \Exception
+     *
      * @return mixed
      */
     public function handle()
     {
-        if (config('chat.nerd_bot') == true) {
-            // Current Timestamp
-            $current = Carbon::now();
-
-            // Cache Expires Timestamp
-            $expiresAt = $current->addMinutes(60);
-
+        if (\config('chat.nerd_bot') == true) {
             // Site Birthday
-            $bday = config('other.birthdate');
+            $bday = \config('other.birthdate');
 
             // Logins Count Last 24hours
-            $logins = User::whereNotNull('last_login')->where('last_login', '>', $current->subDay())->count();
-            cache()->put('nerdbot-logins', $logins, $expiresAt);
+            $logins = User::whereNotNull('last_login')->where('last_login', '>', Carbon::now()->subDay())->count();
 
             // Torrents Uploaded Count Last 24hours
-            $uploads = Torrent::where('created_at', '>', $current->subDay())->count();
-            cache()->put('nerdbot-uploads', $uploads, $expiresAt);
+            $uploads = Torrent::where('created_at', '>', Carbon::now()->subDay())->count();
 
             // New Users Count Last 24hours
-            $users = User::where('created_at', '>', $current->subDay())->count();
-            cache()->put('nerdbot-users', $users, $expiresAt);
+            $users = User::where('created_at', '>', Carbon::now()->subDay())->count();
 
             // Top Banker
             $banker = User::latest('seedbonus')->first();
-            cache()->put('nerdbot-banker', $banker, $expiresAt);
 
             // Most Snatched Torrent
             $snatched = Torrent::latest('times_completed')->first();
-            cache()->put('nerdbot-snatched', $snatched, $expiresAt);
 
             // Most Seeded Torrent
             $seeded = Torrent::latest('seeders')->first();
-            cache()->put('nerdbot-seeded', $seeded, $expiresAt);
 
             // Most Leeched Torrent
             $leeched = Torrent::latest('leechers')->first();
-            cache()->put('nerdbot-leeched', $leeched, $expiresAt);
 
             // FL Torrents
             $fl = Torrent::where('free', '=', 1)->count();
-            cache()->put('nerdbot-fl', $fl, $expiresAt);
 
             // DU Torrents
             $du = Torrent::where('doubleup', '=', 1)->count();
-            cache()->put('nerdbot-doubleup', $du, $expiresAt);
 
             // Peers Count
             $peers = Peer::count();
-            cache()->put('nerdbot-peers', $peers, $expiresAt);
 
             // New User Bans Count Last 24hours
-            $bans = Ban::whereNull('unban_reason')->whereNull('removed_at')->where('created_at', '>', $current->subDay())->count();
-            cache()->put('nerdbot-bans', $bans, $expiresAt);
+            $bans = Ban::whereNull('unban_reason')->whereNull('removed_at')->where('created_at', '>', Carbon::now()->subDay())->count();
 
             // Hit and Run Warning Issued In Last 24hours
-            $warnings = Warning::where('created_at', '>', $current->subDay())->count();
-            cache()->put('nerdbot-warnings', $warnings, $expiresAt);
+            $warnings = Warning::where('created_at', '>', Carbon::now()->subDay())->count();
 
             // URL Helpers
-            $banker_url = hrefProfile($banker);
-            $seeded_url = hrefTorrent($seeded);
-            $leeched_url = hrefTorrent($leeched);
-            $snatched_url = hrefTorrent($snatched);
+            $banker_url = \href_profile($banker);
+            $seeded_url = \href_torrent($seeded);
+            $leeched_url = \href_torrent($leeched);
+            $snatched_url = \href_torrent($snatched);
 
             // Select A Random Nerd Stat
             $statArray = [
-                "In The Last 24 Hours [color=#93c47d][b]{$logins}[/b][/color] Unique Users Have Logged Into ".config('other.title').'!',
-                "In The Last 24 Hours [color=#93c47d][b]{$uploads}[/b][/color] Torrents Have Been Uploaded To ".config('other.title').'!',
-                "In The Last 24 Hours [color=#93c47d][b]{$users}[/b][/color] Users Have Registered To ".config('other.title').'!',
-                "There Are Currently [color=#93c47d][b]{$fl}[/b][/color] Freeleech Torrents On ".config('other.title').'!',
-                "There Are Currently [color=#93c47d][b]{$du}[/b][/color] Double Upload Torrents On ".config('other.title').'!',
-                "Currently [url={$seeded_url}]{$seeded->name}[/url] Is The Best Seeded Torrent On ".config('other.title').'!',
-                "Currently [url={$leeched_url}]{$leeched->name}[/url] Is The Most Leeched Torrent On ".config('other.title').'!',
-                "Currently [url={$snatched_url}]{$snatched->name}[/url] Is The Most Snatched Torrent On ".config('other.title').'!',
-                "Currently [url={$banker_url}]{$banker->username}[/url] Is The Top BON Holder On ".config('other.title').'!',
-                "Currently There Are [color=#93c47d][b]{$peers}[/b][/color] Peers On ".config('other.title').'!',
-                "In The Last 24 Hours [color=#dd7e6b][b]{$bans}[/b][/color] Users Have Been Banned From ".config('other.title').'!',
-                "In The Last 24 Hours [color=#dd7e6b][b]{$warnings}[/b][/color] Hit and Run Warnings Have Been Issued On ".config('other.title').'!',
-                config('other.title')." Birthday Is [b]{$bday}[/b]!",
-                config('other.title').' Is King!',
+                \sprintf('In The Last 24 Hours [color=#93c47d][b]%s[/b][/color] Unique Users Have Logged Into ', $logins).\config('other.title').'!',
+                \sprintf('In The Last 24 Hours [color=#93c47d][b]%s[/b][/color] Torrents Have Been Uploaded To ', $uploads).\config('other.title').'!',
+                \sprintf('In The Last 24 Hours [color=#93c47d][b]%s[/b][/color] Users Have Registered To ', $users).\config('other.title').'!',
+                \sprintf('There Are Currently [color=#93c47d][b]%s[/b][/color] Freeleech Torrents On ', $fl).\config('other.title').'!',
+                \sprintf('There Are Currently [color=#93c47d][b]%s[/b][/color] Double Upload Torrents On ', $du).\config('other.title').'!',
+                \sprintf('Currently [url=%s]%s[/url] Is The Best Seeded Torrent On ', $seeded_url, $seeded->name).\config('other.title').'!',
+                \sprintf('Currently [url=%s]%s[/url] Is The Most Leeched Torrent On ', $leeched_url, $leeched->name).\config('other.title').'!',
+                \sprintf('Currently [url=%s]%s[/url] Is The Most Snatched Torrent On ', $snatched_url, $snatched->name).\config('other.title').'!',
+                \sprintf('Currently [url=%s]%s[/url] Is The Top BON Holder On ', $banker_url, $banker->username).\config('other.title').'!',
+                \sprintf('Currently There Are [color=#93c47d][b]%s[/b][/color] Peers On ', $peers).\config('other.title').'!',
+                \sprintf('In The Last 24 Hours [color=#dd7e6b][b]%s[/b][/color] Users Have Been Banned From ', $bans).\config('other.title').'!',
+                \sprintf('In The Last 24 Hours [color=#dd7e6b][b]%s[/b][/color] Hit and Run Warnings Have Been Issued On ', $warnings).\config('other.title').'!',
+                \config('other.title').\sprintf(' Birthday Is [b]%s[/b]!', $bday),
+                \config('other.title').' Is King!',
             ];
-            $selected = mt_rand(0, count($statArray) - 1);
+            $selected = \mt_rand(0, \count($statArray) - 1);
 
             // Auto Shout Nerd Stat
-            $this->chat->systemMessage("{$statArray[$selected]}", 2);
+            $this->chatRepository->systemMessage($statArray[$selected], 2);
         }
+        $this->comment('Automated Nerd Stat Command Complete');
     }
 }

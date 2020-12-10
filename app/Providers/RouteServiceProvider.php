@@ -2,19 +2,19 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -58,7 +58,7 @@ class RouteServiceProvider extends ServiceProvider
         Route::prefix('api')
             ->middleware(['web', 'auth'])
             ->namespace($this->namespace)
-            ->group(base_path('routes/vue.php'));
+            ->group(\base_path('routes/vue.php'));
     }
 
     /**
@@ -72,7 +72,7 @@ class RouteServiceProvider extends ServiceProvider
     {
         Route::middleware('web')
             ->namespace($this->namespace)
-            ->group(base_path('routes/web.php'));
+            ->group(\base_path('routes/web.php'));
     }
 
     /**
@@ -87,6 +87,6 @@ class RouteServiceProvider extends ServiceProvider
         Route::prefix('api')
             ->middleware('api')
             ->namespace($this->namespace)
-            ->group(base_path('routes/api.php'));
+            ->group(\base_path('routes/api.php'));
     }
 }

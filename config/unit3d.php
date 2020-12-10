@@ -2,13 +2,13 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 return [
@@ -18,11 +18,11 @@ return [
     | Powered By
     |--------------------------------------------------------------------------
     |
-    | Name of Codebase
+    | A string that describes the core software that powers the application
     |
     */
 
-    'powered-by' => 'Powered By UNIT3D v1.9.3',
+    'powered-by' => 'Powered By UNIT3D Community Edition v4.0.0',
 
     /*
     |--------------------------------------------------------------------------
@@ -33,7 +33,7 @@ return [
     |
     */
 
-    'codebase' => 'UNIT3D Nex-Gen Torrent Tracker',
+    'codebase' => 'UNIT3D Community Edition (Nex-Gen Torrent Tracker)',
 
     /*
     |--------------------------------------------------------------------------
@@ -44,6 +44,19 @@ return [
     |
     */
 
-    'version' => 'v1.9.3',
+    'version' => 'v4.0.0',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Owner Account Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Various settings related to the Owner account configuration
+    |
+    */
+
+    'owner-username'         => env('DEFAULT_OWNER_NAME', 'UNIT3D'),
+    'default-owner-email'    => env('DEFAULT_OWNER_EMAIL', 'none@none.com'),
+    'default-owner-password' => env('DEFAULT_OWNER_PASSWORD', 'UNIT3D'),
 
 ];

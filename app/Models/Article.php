@@ -2,31 +2,39 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Models;
 
 use App\Helpers\Bbcode;
+use App\Helpers\Linkify;
+use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use voku\helper\AntiXSS;
 
 /**
- * @property int $id
- * @property string $title
- * @property string $slug
- * @property string|null $image
- * @property string $content
+ * App\Models\Article.
+ *
+ * @property int                             $id
+ * @property string                          $title
+ * @property string                          $slug
+ * @property string|null                     $image
+ * @property string                          $content
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property int $user_id
+ * @property int                             $user_id
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Comment[] $comments
+ * @property-read int|null $comments_count
  * @property-read \App\Models\User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Article newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Article newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Article query()
@@ -42,6 +50,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Article extends Model
 {
+    use HasFactory;
+    use Auditable;
+
     /**
      * Belongs To A User.
      *
@@ -74,22 +85,22 @@ class Article extends Model
      *
      * @return string Formatted And Trimmed Content
      */
-    public function getBrief($length = 100, $ellipses = true, $strip_html = false)
+    public function getBrief($length = 20, $ellipses = true, $strip_html = false)
     {
         $input = $this->content;
         //strip tags, if desired
         if ($strip_html) {
-            $input = strip_tags($input);
+            $input = \strip_tags($input);
         }
 
         //no need to trim, already shorter than trim length
-        if (strlen($input) <= $length) {
+        if (\strlen($input) <= $length) {
             return $input;
         }
 
         //find last space within length
-        $last_space = strrpos(substr($input, 0, $length), ' ');
-        $trimmed_text = substr($input, 0, $last_space);
+        $last_space = \strrpos(\substr($input, 0, $length), ' ');
+        $trimmed_text = \substr($input, 0, $last_space);
 
         //add ellipses (...)
         if ($ellipses) {
@@ -100,6 +111,20 @@ class Article extends Model
     }
 
     /**
+     * Set The Articles Content After Its Been Purified.
+     *
+     * @param string $value
+     *
+     * @return void
+     */
+    public function setContentAttribute($value)
+    {
+        $antiXss = new AntiXSS();
+
+        $this->attributes['content'] = $antiXss->xss_clean($value);
+    }
+
+    /**
      * Parse Content And Return Valid HTML.
      *
      * @return string Parsed BBCODE To HTML
@@ -107,7 +132,8 @@ class Article extends Model
     public function getContentHtml()
     {
         $bbcode = new Bbcode();
+        $linkify = new Linkify();
 
-        return $bbcode->parse($this->content, true);
+        return $bbcode->parse($linkify->linky($this->content), true);
     }
 }

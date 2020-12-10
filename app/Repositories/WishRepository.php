@@ -2,23 +2,21 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     Poppabear
  */
 
 namespace App\Repositories;
 
+use App\Interfaces\WishInterface;
+use App\Models\Torrent;
 use App\Models\User;
 use App\Models\Wish;
-use App\Models\Torrent;
-use Illuminate\Support\Str;
-use App\Interfaces\WishInterface;
-use App\Services\Clients\OmdbClient;
 
 class WishRepository implements WishInterface
 {
@@ -33,11 +31,6 @@ class WishRepository implements WishInterface
     private $user;
 
     /**
-     * @var OmdbClient
-     */
-    private $client;
-
-    /**
      * @var Torrent
      */
     private $torrent;
@@ -45,16 +38,14 @@ class WishRepository implements WishInterface
     /**
      * WishRepository constructor.
      *
-     * @param Wish       $wish
-     * @param User       $user
-     * @param OmdbClient $client
-     * @param Torrent    $torrent
+     * @param Wish    $wish
+     * @param User    $user
+     * @param Torrent $torrent
      */
-    public function __construct(Wish $wish, User $user, OmdbClient $client, Torrent $torrent)
+    public function __construct(Wish $wish, User $user, Torrent $torrent)
     {
         $this->wish = $wish;
         $this->user = $user;
-        $this->client = $client;
         $this->torrent = $torrent;
     }
 
@@ -106,10 +97,10 @@ class WishRepository implements WishInterface
      */
     public function exists($uid, $id)
     {
-        return $this->user->find($uid)
+        return (bool) $this->user->find($uid)
             ->wishes()
-            ->where('imdb', '=', $id)
-            ->first() ? true : false;
+            ->where('tmdb', '=', $id)
+            ->first();
     }
 
     /**
@@ -119,13 +110,11 @@ class WishRepository implements WishInterface
      */
     public function isGranted($id)
     {
-        $id = str_replace('tt', '', $id);
-
-        return $this->torrent
-            ->where('imdb', '=', $id)
+        return (bool) $this->torrent
+            ->where('tmdb', '=', $id)
             ->where('seeders', '>', 0)
             ->where('status', '=', 1)
-            ->first() ? true : false;
+            ->first();
     }
 
     /**
@@ -136,14 +125,13 @@ class WishRepository implements WishInterface
     public function getSource($id)
     {
         if ($this->isGranted($id)) {
-            $id = str_replace('tt', '', $id);
             $source = $this->torrent
-                ->where('imdb', '=', $id)
+                ->where('tmdb', '=', $id)
                 ->where('seeders', '>', 0)
                 ->where('status', '=', 1)
                 ->first();
 
-            return route('torrent', ['slug' => Str::slug($source->name), 'id' => $source->id]);
+            return \route('torrent', ['id' => $source->id]);
         }
 
         return $this->findById($id)->source ?? null;
@@ -167,14 +155,5 @@ class WishRepository implements WishInterface
     public function delete($id)
     {
         return $this->findById($id)->delete();
-    }
-
-    /**
-     * @param $imdb
-     * @return array|mixed|null
-     */
-    public function omdbRequest($imdb)
-    {
-        return $this->client->find(['imdb' => $imdb]);
     }
 }

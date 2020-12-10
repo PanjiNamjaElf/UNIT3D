@@ -2,13 +2,13 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Helpers;
@@ -271,37 +271,27 @@ class Bbcode
 
         'linebreak' => [
             'pattern' => '/\r\n/',
-            'replace' => '<br />',
+            'replace' => '<br>',
             'content' => '',
         ],
 
         'spoiler' => [
             'pattern' => '/\[spoiler\](.*?)\[\/spoiler\]/s',
-            'replace' => '<details class="label label-primary"><summary>Spoiler</summary><pre><code>$1</code></pre></details>',
+            'replace' => '<details class="label label-primary"><summary>Spoiler</summary><pre><code><div style="text-align:left;">$1</div></code></pre></details>',
             'content' => '$1',
         ],
 
         'named-spoiler' => [
             'pattern' => '/\[spoiler\=(.*?)\](.*?)\[\/spoiler\]/s',
-            'replace' => '<details class="label label-primary"><summary>$1</summary><pre><code>$2</code></pre></details>',
+            'replace' => '<details class="label label-primary"><summary>$1</summary><pre><code><div style="text-align:left;">$2</div></code></pre></details>',
             'content' => '$1',
         ],
-
-        'ss-compare' => [
-            'pattern' => '/\[ss-compare\=(.*?)\](.*?)\[\/ss-compare\]/s',
-            'replace' => '<a class="ss-compare" href="#">
-                          <img src="$1" />
-                          <img src="$2" />
-                          </a>',
-            'content' => '$1',
-        ],
-
     ];
 
     /**
      * @var array
      */
-    protected $enabledParsers;
+    protected $enabledParsers = [];
 
     public function __construct()
     {
@@ -313,6 +303,7 @@ class Bbcode
      *
      * @param      $source
      * @param bool $caseInsensitive
+     *
      * @return string
      */
     public function parse($source, $caseInsensitive = false)
@@ -329,7 +320,8 @@ class Bbcode
     /**
      * Remove all BBCode.
      *
-     * @param  string $source
+     * @param string $source
+     *
      * @return string Parsed text
      */
     public function stripBBCodeTags($source)
@@ -344,15 +336,16 @@ class Bbcode
     /**
      * Searches after a specified pattern and replaces it with provided structure.
      *
-     * @param  string $pattern Search pattern
-     * @param  string $replace Replacement structure
-     * @param  string $source  Text to search in
+     * @param string $pattern Search pattern
+     * @param string $replace Replacement structure
+     * @param string $source  Text to search in
+     *
      * @return string Parsed text
      */
     protected function searchAndReplace($pattern, $replace, $source)
     {
-        while (preg_match($pattern, $source)) {
-            $source = preg_replace($pattern, $replace, $source);
+        while (\preg_match($pattern, $source)) {
+            $source = \preg_replace($pattern, $replace, $source);
         }
 
         return $source;
@@ -361,7 +354,8 @@ class Bbcode
     /**
      * Helper function to parse case sensitive.
      *
-     * @param  string $source String containing the BBCode
+     * @param string $source String containing the BBCode
+     *
      * @return string Parsed text
      */
     public function parseCaseSensitive($source)
@@ -372,7 +366,8 @@ class Bbcode
     /**
      * Helper function to parse case insensitive.
      *
-     * @param  string $source String containing the BBCode
+     * @param string $source String containing the BBCode
+     *
      * @return string Parsed text
      */
     public function parseCaseInsensitive($source)
@@ -398,6 +393,7 @@ class Bbcode
      * @param string $pattern Pattern
      * @param string $replace Replace pattern
      * @param string $content Parsed text pattern
+     *
      * @return void
      */
     public function setParser($name, $pattern, $replace, $content)

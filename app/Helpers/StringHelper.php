@@ -2,35 +2,44 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Helpers;
 
 class StringHelper
 {
-    const KIB = 1024;
+    const KIB = 1_024;
 
-    const MIB = 1024 * 1024;
+    const MIB = 1_024 * 1_024;
 
-    const GIB = 1024 * 1024 * 1024;
+    const GIB = 1_024 * 1_024 * 1_024;
 
-    const TIB = 1024 * 1024 * 1024 * 1024;
+    const TIB = 1_024 * 1_024 * 1_024 * 1_024;
 
-    const PIB = 1024 * 1024 * 1024 * 1024 * 1024;
+    const PIB = 1_024 * 1_024 * 1_024 * 1_024 * 1_024;
+
+    /**
+     * @var string
+     */
+    private const CHARACTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-';
+
+    /**
+     * @var string[]
+     */
+    private const ENDS = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'];
 
     public static function generateRandomString($length = 20)
     {
-        $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-';
         $string = '';
         for ($i = 0; $i < $length; $i++) {
-            $string .= $characters[rand(0, strlen($characters) - 1)];
+            $string .= self::CHARACTERS[\rand(0, \strlen(self::CHARACTERS) - 1)];
         }
 
         return $string;
@@ -38,7 +47,7 @@ class StringHelper
 
     public static function formatBytes($bytes, $precision = 2)
     {
-        $bytes = max($bytes, 0);
+        $bytes = \max($bytes, 0);
         $suffix = 'B';
         $value = $bytes;
         if ($bytes >= self::PIB) {
@@ -58,13 +67,13 @@ class StringHelper
             $value = $bytes / self::KIB;
         }
 
-        return round($value, $precision).' '.$suffix;
+        return \round($value, $precision).' '.$suffix;
     }
 
     /**
      * @method timeRemaining
      *
-     * @param  time  $seconds  in bigInt
+     * @param time $seconds in bigInt
      *
      * @return string
      */
@@ -77,42 +86,42 @@ class StringHelper
         $months = 0;
         $years = 0;
 
-        $seconds = config('hitrun.seedtime') - $seconds;
+        $seconds = \config('hitrun.seedtime') - $seconds;
 
         if ($seconds == 0) {
             return 'N/A';
         }
-        while ($seconds >= 31536000) {
+        while ($seconds >= 31_536_000) {
             $years++;
-            $seconds -= 31536000;
+            $seconds -= 31_536_000;
         }
-        while ($seconds >= 2592000) {
+        while ($seconds >= 2_592_000) {
             $months++;
-            $seconds -= 2592000;
+            $seconds -= 2_592_000;
         }
-        while ($seconds >= 604800) {
+        while ($seconds >= 604_800) {
             $weeks++;
-            $seconds -= 604800;
+            $seconds -= 604_800;
         }
-        while ($seconds >= 86400) {
+        while ($seconds >= 86_400) {
             $days++;
-            $seconds -= 86400;
+            $seconds -= 86_400;
         }
-        while ($seconds >= 3600) {
+        while ($seconds >= 3_600) {
             $hours++;
-            $seconds -= 3600;
+            $seconds -= 3_600;
         }
         while ($seconds >= 60) {
             $minutes++;
             $seconds -= 60;
         }
-        $years = ($years == 0) ? '' : $years.trans('common.abbrev-years');
-        $months = ($months == 0) ? '' : $months.trans('common.abbrev-months');
-        $weeks = ($weeks == 0) ? '' : $weeks.trans('common.abbrev-weeks');
-        $days = ($days == 0) ? '' : $days.trans('common.abbrev-days');
-        $hours = ($hours == 0) ? '' : $hours.trans('common.abbrev-hours');
-        $minutes = ($minutes == 0) ? '' : $minutes.trans('common.abbrev-minutes');
-        $seconds = ($seconds == 0) ? '' : $seconds.trans('common.abbrev-seconds');
+        $years = ($years === 0) ? '' : $years.\trans('common.abbrev-years');
+        $months = ($months === 0) ? '' : $months.\trans('common.abbrev-months');
+        $weeks = ($weeks === 0) ? '' : $weeks.\trans('common.abbrev-weeks');
+        $days = ($days === 0) ? '' : $days.\trans('common.abbrev-days');
+        $hours = ($hours === 0) ? '' : $hours.\trans('common.abbrev-hours');
+        $minutes = ($minutes === 0) ? '' : $minutes.\trans('common.abbrev-minutes');
+        $seconds = ($seconds == 0) ? '' : $seconds.\trans('common.abbrev-seconds');
 
         return $years.$months.$weeks.$days.$hours.$minutes.$seconds;
     }
@@ -120,7 +129,7 @@ class StringHelper
     /**
      * @method timeElapsed
      *
-     * @param  time  $seconds  in bigInt
+     * @param time $seconds in bigInt
      *
      * @return string
      */
@@ -136,48 +145,47 @@ class StringHelper
         if ($seconds == 0) {
             return 'N/A';
         }
-        while ($seconds >= 31536000) {
+        while ($seconds >= 31_536_000) {
             $years++;
-            $seconds -= 31536000;
+            $seconds -= 31_536_000;
         }
-        while ($seconds >= 2592000) {
+        while ($seconds >= 2_592_000) {
             $months++;
-            $seconds -= 2592000;
+            $seconds -= 2_592_000;
         }
-        while ($seconds >= 604800) {
+        while ($seconds >= 604_800) {
             $weeks++;
-            $seconds -= 604800;
+            $seconds -= 604_800;
         }
-        while ($seconds >= 86400) {
+        while ($seconds >= 86_400) {
             $days++;
-            $seconds -= 86400;
+            $seconds -= 86_400;
         }
-        while ($seconds >= 3600) {
+        while ($seconds >= 3_600) {
             $hours++;
-            $seconds -= 3600;
+            $seconds -= 3_600;
         }
         while ($seconds >= 60) {
             $minutes++;
             $seconds -= 60;
         }
-        $years = ($years == 0) ? '' : $years.trans('common.abbrev-years');
-        $months = ($months == 0) ? '' : $months.trans('common.abbrev-months');
-        $weeks = ($weeks == 0) ? '' : $weeks.trans('common.abbrev-weeks');
-        $days = ($days == 0) ? '' : $days.trans('common.abbrev-days');
-        $hours = ($hours == 0) ? '' : $hours.trans('common.abbrev-hours');
-        $minutes = ($minutes == 0) ? '' : $minutes.trans('common.abbrev-minutes');
-        $seconds = ($seconds == 0) ? '' : $seconds.trans('common.abbrev-seconds');
+        $years = ($years === 0) ? '' : $years.\trans('common.abbrev-years');
+        $months = ($months === 0) ? '' : $months.\trans('common.abbrev-months');
+        $weeks = ($weeks === 0) ? '' : $weeks.\trans('common.abbrev-weeks');
+        $days = ($days === 0) ? '' : $days.\trans('common.abbrev-days');
+        $hours = ($hours === 0) ? '' : $hours.\trans('common.abbrev-hours');
+        $minutes = ($minutes === 0) ? '' : $minutes.\trans('common.abbrev-minutes');
+        $seconds = ($seconds == 0) ? '' : $seconds.\trans('common.abbrev-seconds');
 
         return $years.$months.$weeks.$days.$hours.$minutes.$seconds;
     }
 
     public static function ordinal($number)
     {
-        $ends = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'];
         if ((($number % 100) >= 11) && (($number % 100) <= 13)) {
             return $number.'th';
-        } else {
-            return $number.$ends[$number % 10];
         }
+
+        return $number.self::ENDS[$number % 10];
     }
 }

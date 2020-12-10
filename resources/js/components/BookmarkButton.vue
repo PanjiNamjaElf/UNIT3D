@@ -1,7 +1,7 @@
 <template>
     <button
         @click="bookmarked ? unBookmark(id) : bookmark(id)"
-        :class="['btn', bookmarked ? 'btn-md btn-danger' : 'btn-md btn-primary']"
+        :class="['btn', bookmarked ? 'btn-sm btn-danger' : 'btn-sm btn-primary']"
     >
         <i class="fal fa-bookmark"></i> {{ bookmarked ? 'Unbookmark' : 'Bookmark' }}
     </button>
@@ -28,13 +28,13 @@ export default {
     methods: {
         bookmark(id) {
             axios
-                .get('/torrents/bookmark/' + id)
+                .post('/bookmarks/' + id + '/store')
                 .then(response => {
                     this.bookmarked = true;
 
                     Swal.fire({
                         position: 'center',
-                        type: 'success',
+                        icon: 'success',
                         title: 'Torrent Has Been Bookmarked Successfully!',
                         showConfirmButton: false,
                         timer: 4500,
@@ -47,13 +47,13 @@ export default {
 
         unBookmark(id) {
             axios
-                .get('/torrents/unbookmark/' + id)
+                .post('/bookmarks/' + id + '/destroy', {_method: 'delete'})
                 .then(response => {
                     this.bookmarked = false;
 
                     Swal.fire({
                         position: 'center',
-                        type: 'success',
+                        icon: 'success',
                         title: 'Torrent Has Been Unbookmarked Successfully!',
                         showConfirmButton: false,
                         timer: 4500,

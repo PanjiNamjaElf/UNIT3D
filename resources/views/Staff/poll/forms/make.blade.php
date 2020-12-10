@@ -1,4 +1,4 @@
-<form method="POST" action="{{ route('postCreatePoll') }}">
+<form method="POST" action="{{ route('staff.polls.store') }}">
     @if (count($errors) > 0)
         <div class="alert alert-danger">
             <ul>
@@ -12,55 +12,58 @@
     @csrf
 
     <div class="form-group">
-        <label for="stitle">Title:</label>
-        <input type="text" name="title" class="form-control" value="" required>
+        <label for="stitle">@lang('common.title'):</label>
+        <label>
+            <input type="text" name="title" class="form-control" value="" required>
+        </label>
     </div>
 
     <div class="form-group">
-        <label for="option1">Option 1:</label>
-        <input type="text" name="options[]" class="form-control" value="">
+        <label for="option1">@lang('poll.option') 1:</label>
+        <label>
+            <input type="text" name="options[]" class="form-control" value="">
+        </label>
     </div>
 
     <div class="form-group">
-        <label for="option2">Option 2:</label>
-        <input type="text" name="options[]" class="form-control" value="">
+        <label for="option2">@lang('poll.option') 2:</label>
+        <label>
+            <input type="text" name="options[]" class="form-control" value="">
+        </label>
     </div>
 
     <div class="more-options"></div>
 
     <div class="form-group">
-        <button id="add" class="btn btn-primary">Add Option</button>
-        <button id="del" class="btn btn-primary">Delete Option</button>
+        <button id="add" class="btn btn-primary">@lang('poll.add-option')</button>
+        <button id="del" class="btn btn-primary">@lang('poll.delete-option')</button>
     </div>
 
     <hr>
 
     <div class="checkbox">
         <label>
-            <input type="checkbox" name="ip_checking" value="1">Enable duplicate IP checking <span class="text-red">(NEEDED TO PREVENT DUPLICATE VOTING FROM USERS!)</span>
-        </label>
-    </div>
-
-    <div class="checkbox">
-        <label>
-            <input type="checkbox" name="multiple_choice" value="1">Allow multiple answers
+            <input type="checkbox" name="multiple_choice" value="1">@lang('poll.multiple-choice')
         </label>
     </div>
 
     <div class="form-group">
-        <button type="submit" class="btn btn-primary">Create Poll</button>
+        <button type="submit" class="btn btn-primary">@lang('poll.create-poll')</button>
     </div>
 </form>
 
 @section('javascripts')
-    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce() }}">
-        var options = 2;
+    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce('script') }}">
+      let options = 2
+      const langOption = "<?php echo __('poll.option') ?>"
 
         $('#add').on('click', function (e) {
             e.preventDefault();
-            options = options + 1;
-            var optionHTML = '<div class="form-group extra-option"><label for="option' + options + '">Option ' + options + ':</label><input type="text" name="options[]" class="form-control" value="" required></div>';
-            $('.more-options').append(optionHTML);
+            options += 1;
+          const optionHTML = '<div class="form-group extra-option"><label for="option' + options + '">' + langOption
+            + options
+            + ':</label><input type="text" name="options[]" class="form-control" value="" required></div>'
+          $('.more-options').append(optionHTML);
         });
 
         $('#del').on('click', function (e) {
@@ -68,5 +71,6 @@
             options = (options > 2) ? options - 1 : 2;
             $('.extra-option').last().remove();
         });
+
     </script>
 @endsection

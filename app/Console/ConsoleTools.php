@@ -1,23 +1,22 @@
 <?php
-
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Console;
 
-use Symfony\Component\Process\Process;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
+use Symfony\Component\Process\Process;
 
 trait ConsoleTools
 {
@@ -28,32 +27,32 @@ trait ConsoleTools
 
     private function cyan($line)
     {
-        $this->io->writeln("\n<fg=cyan>$line</>");
+        $this->io->writeln(\sprintf('<fg=cyan>%s</>', $line));
     }
 
     private function white($line)
     {
-        $this->io->writeln("\n$line");
+        $this->io->writeln(PHP_EOL.$line);
     }
 
     private function magenta($line)
     {
-        $this->io->writeln("\n<fg=magenta>$line</>");
+        $this->io->writeln(\sprintf('<fg=magenta>%s</>', $line));
     }
 
     private function green($line)
     {
-        $this->io->writeln("\n<fg=green>$line</>");
+        $this->io->writeln(\sprintf('<fg=green>%s</>', $line));
     }
 
     private function red($line)
     {
-        $this->io->writeln("\n<fg=red>$line</>");
+        $this->io->writeln(\sprintf('<fg=red>%s</>', $line));
     }
 
     private function blue($line)
     {
-        $this->io->writeln("\n<fg=blue>$line</>");
+        $this->io->writeln(\sprintf('<fg=blue>%s</>', $line));
     }
 
     private function done()
@@ -63,29 +62,29 @@ trait ConsoleTools
 
     private function header($line)
     {
-        $this->blue(str_repeat('=', 50));
+        $this->blue(\str_repeat('=', 50));
         $this->io->write($line);
-        $this->blue(str_repeat('=', 50));
+        $this->blue(\str_repeat('=', 50));
     }
 
     private function alertSuccess($line)
     {
-        $this->io->writeln("\n<fg=white>[</><fg=green> !! $line !! </><fg=white>]</>");
+        $this->io->writeln(\sprintf('<fg=white>[</><fg=green> !! %s !! </><fg=white>]</>', $line));
     }
 
     private function alertDanger($line)
     {
-        $this->io->writeln("\n<fg=white>[</><fg=red> !! $line !! </><fg=white>]</>");
+        $this->io->writeln(\sprintf('<fg=white>[</><fg=red> !! %s !! </><fg=white>]</>', $line));
     }
 
     private function alertInfo($line)
     {
-        $this->io->writeln("\n<fg=white>[</><fg=cyan> !! $line !! </><fg=white>]</>");
+        $this->io->writeln(\sprintf('<fg=white>[</><fg=cyan> !! %s !! </><fg=white>]</>', $line));
     }
 
     private function alertWarning($line)
     {
-        $this->io->writeln("\n<fg=white>[</><fg=yellow> !! $line !! </><fg=white>]</>");
+        $this->io->writeln(\sprintf('<fg=white>[</><fg=yellow> !! %s !! </><fg=white>]</>', $line));
     }
 
     private function commands(array $commands, $silent = false)
@@ -107,22 +106,22 @@ trait ConsoleTools
             $bar = $this->progressStart();
         }
 
-        $process = new Process($command);
-        $process->setTimeout(3600);
+        $process = Process::fromShellCommandline($command);
+        $process->setTimeout(3_600);
         $process->start();
 
         while ($process->isRunning()) {
             try {
                 $process->checkTimeout();
             } catch (ProcessTimedOutException $e) {
-                $this->red("'{$command}' timed out.!");
+                $this->red(\sprintf("'%s' timed out.!", $command));
             }
 
             if (! $silent) {
                 $bar->advance();
             }
 
-            usleep(200000);
+            \usleep(200_000);
         }
 
         if (! $silent) {
@@ -155,11 +154,11 @@ trait ConsoleTools
     }
 
     /**
-     * @param $bar
+     * @param \Symfony\Component\Console\Helper\ProgressBar $progressBar
      */
-    protected function progressStop(ProgressBar $bar)
+    protected function progressStop(ProgressBar $progressBar)
     {
-        $bar->setMessage('<fg=green>Done!</>');
-        $bar->finish();
+        $progressBar->setMessage('<fg=green>Done!</>');
+        $progressBar->finish();
     }
 }

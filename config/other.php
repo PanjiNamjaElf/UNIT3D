@@ -2,13 +2,13 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 return [
@@ -22,7 +22,7 @@ return [
     |
     */
 
-    'codebase' => '"UNIT3D" Nex-Gen Torrent Tracker v1.9.3',
+    'codebase' => 'UNIT3D Community Edition (Nex-Gen Torrent Tracker) v4.0.0',
 
     /*
     |--------------------------------------------------------------------------
@@ -137,7 +137,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | This will be the upload and download given to new members. (In Bytes!)
-    | Default: 50GB Upload and 1GB Download
+    | Default: 50GiB Upload and 1GiB Download
     */
     'default_upload'   => '53687091200',
     'default_download' => '1073741824',
@@ -156,7 +156,7 @@ return [
     | 7 = Dark Teal Theme
     | 8 = Dark Yellow Theme
     */
-    'default_style' => 0,
+    'default_style' => 2,
 
     /*
     |--------------------------------------------------------------------------
@@ -166,7 +166,7 @@ return [
     | far = Regular
     | fal = Light
     */
-    'font-awesome' => 'fal',
+    'font-awesome' => 'fas',
 
     /*
     |--------------------------------------------------------------------------
@@ -181,15 +181,43 @@ return [
     |--------------------------------------------------------------------------
     | Rules Page URL
     |--------------------------------------------------------------------------
-    | Example: rules.1
+    | Example: 1
     */
-    'rules_url' => 'https://'.parse_url(env('APP_URL'), PHP_URL_HOST).'/page/rules.1',
+    'rules_url' => 'https://'.parse_url(env('APP_URL'), PHP_URL_HOST).'/pages/1',
 
     /*
     |--------------------------------------------------------------------------
     | FAQ Page URL
     |--------------------------------------------------------------------------
-    | Example: faq.2
+    | Example: 2
     */
-    'faq_url' => 'https://'.parse_url(env('APP_URL'), PHP_URL_HOST).'/page/faq.2',
+    'faq_url' => 'https://'.parse_url(env('APP_URL'), PHP_URL_HOST).'/pages/2',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Upload Guide Page URL For Upload Page
+    |--------------------------------------------------------------------------
+    | Example: 4
+    */
+    'upload-guide_url' => 'https://'.parse_url(env('APP_URL'), PHP_URL_HOST).'/pages/4',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Hide Staff Area Forum Posts From Chat
+    |--------------------------------------------------------------------------
+    | 1 = Enabled
+    | 0 = Disabled
+    | If enabled, Staff members get notifications instead of posting being announced in chat.
+    */
+    'staff-forum-notify' => '0',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Staff Forum Id
+    |--------------------------------------------------------------------------
+    | Example: 2
+    | The ID value of staff forum area. Should be the main / parent ID.
+    */
+    'staff-forum-id' => '',
+
 ];

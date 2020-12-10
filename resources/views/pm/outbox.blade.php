@@ -26,35 +26,48 @@
                             <div class="input-group pull-right">
                                 <form role="form" method="POST" action="{{ route('searchPMOutbox') }}">
                                     @csrf
-                                    <input type="text" name="subject" id="subject" class="form-control"
-                                           placeholder="@lang('pm.search')">
+                                    <label for="subject"></label><input type="text" name="subject" id="subject"
+                                        class="form-control" placeholder="@lang('pm.search')">
                                 </form>
                             </div>
                         </div>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-condensed table-bordered table-striped table-hover">
-                        <thead>
-                        <tr>
-                            <td class="col-sm-2">@lang('pm.to')</td>
-                            <td class="col-sm-6">@lang('pm.subject')</td>
-                            <td class="col-sm-2">@lang('pm.sent-at')</td>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach ($pms as $p)
-                            <tr>
-                                <td class="col-sm-2"><a
-                                            href="{{ route('profile', ['username' => $p->receiver->username, 'id' => $p->receiver->id]) }}"
-                                           >{{ $p->receiver->username}}</a></td>
-                                <td class="col-sm-5"><a
-                                            href="{{ route('message', ['id' => $p->id]) }}">{{ $p->subject }}</a>
-                                </td>
-                                <td class="col-sm-2">{{ $p->created_at->diffForHumans() }}</td>
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
+                            <thead>
+                                <tr>
+                                    <td class="col-sm-2">@lang('pm.to')</td>
+                                    <td class="col-sm-6">@lang('pm.subject')</td>
+                                    <td class="col-sm-2">@lang('pm.sent-at')</td>
+                                    <td class="col-sm-2">@lang('pm.delete')</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($pms as $p)
+                                    <tr>
+                                        <td class="col-sm-2"><a
+                                                href="{{ route('users.show', ['username' => $p->receiver->username]) }}">{{ $p->receiver->username }}</a>
+                                        </td>
+                                        <td class="col-sm-5"><a
+                                                href="{{ route('message', ['id' => $p->id]) }}">{{ $p->subject }}</a>
+                                        </td>
+                                        <td class="col-sm-2">{{ $p->created_at->diffForHumans() }}</td>
+                                        <td class="col-sm-2">
+                                            <form role="form" method="POST" action="{{ route('delete-pm', ['id' => $p->id]) }}">
+                                                @csrf
+                                                <input type="hidden" name="dest" value="outbox" />
+                                                <div class="col-sm-1">
+                                                    <button type="submit" class="btn btn-xs btn-danger"
+                                                        title="@lang('pm.delete')"><i
+                                                            class="{{ config('other.font-awesome') }} fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                     <div class="align-center">{{ $pms->links() }}</div>
                 </div>

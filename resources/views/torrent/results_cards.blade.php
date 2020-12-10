@@ -13,32 +13,58 @@
                         <i class="{{ config('other.font-awesome') }} fa-fw fa-check text-orange"></i>{{ $t->times_completed }}
                     </span>&nbsp;
                         <span class="badge-user text-bold text-blue" style="float:right;">{{ $t->getSize() }}</span>&nbsp;
-                        <span class="badge-user text-bold text-blue" style="float:right;">{{ $t->type }}</span>&nbsp;
+                        <span class="badge-user text-bold text-blue" style="float:right;">{{ $t->resolution->name ?? 'No Res' }}</span>
+                        <span class="badge-user text-bold text-blue" style="float:right;">{{ $t->type->name }}</span>&nbsp;
                         <span class="badge-user text-bold text-blue" style="float:right;">{{ $t->category->name }}</span>&nbsp;
                     </div>
                     <div class="card_body">
                         <div class="body_poster">
-                            @if($t->movie && $t->movie->poster)
-                                <img src="{{ $t->movie->poster }}" class="show-poster" data-image='<img src="{{ $t->movie->poster }}" alt="@lang('torrent.poster')" style="height: 1000px;">'>
+                            @if ($t->category->movie_meta || $t->category->tv_meta)
+                                <img src="{{ $t->meta->poster ?? 'https://via.placeholder.com/600x900' }}" class="show-poster"
+                                     data-image='<img src="{{ $t->meta->poster ?? 'https://via.placeholder.com/600x900' }}" alt="@lang('torrent.poster')" style="height: 1000px;">'
+                                     class="torrent-poster-img-small show-poster" alt="@lang('torrent.poster')">
+                            @endif
+
+                            @if ($t->category->game_meta && isset($t->meta) && $t->meta->cover->image_id && $t->meta->name)
+                                <img src="https://images.igdb.com/igdb/image/upload/t_original/{{ $t->meta->cover->image_id }}.jpg" class="show-poster"
+                                     data-name='<i style="color: #a5a5a5;">{{ $t->meta->name ?? 'N/A' }}</i>' data-image='<img src="https://images.igdb.com/igdb/image/upload/t_original/{{ $t->meta->cover->image_id }}.jpg" alt="@lang('torrent.poster')" style="height: 1000px;">'
+                                     class="torrent-poster-img-small show-poster" alt="@lang('torrent.poster')">
+                            @endif
+
+                            @if ($t->category->no_meta || $t->category->music_meta)
+                                <img src="https://via.placeholder.com/600x900" class="show-poster"
+                                     data-name='<i style="color: #a5a5a5;">N/A</i>' data-image='<img src="https://via.placeholder.com/600x900" alt="@lang('torrent.poster')" style="height: 1000px;">'
+                                     class="torrent-poster-img-small show-poster" alt="@lang('torrent.poster')">
                             @endif
                         </div>
                         <div class="body_description">
                             <h3 class="description_title">
-                                <a href="{{ route('torrent', ['slug' => $t->slug, 'id' => $t->id]) }}">{{ $t->name }}
-                                    @if($t->movie && $t->movie->releaseYear)
-                                        <span class="text-bold text-pink"> {{ $t->movie->releaseYear }}</span>
+                                <a href="{{ route('torrent', ['id' => $t->id]) }}">{{ $t->name }}
+                                    @if(($t->category->movie_meta || $t->category->tv_meta) && isset($t->meta) && $t->meta->releaseYear)
+                                        <span class="text-bold text-pink"> {{ $t->meta->releaseYear ?? '' }}</span>
+                                    @endif
+                                    @if($t->category->game_meta && isset($t->meta) && $t->meta->first_release_date)
+                                        <span class="text-bold text-pink"> {{ date('Y', strtotime( $t->meta->first_release_date)) }}</span>
                                     @endif
                                 </a>
                             </h3>
-                            @if ($t->movie && $t->movie->genres)
-                                @foreach ($t->movie->genres as $genre)
-                                    <span class="genre-label">{{ $genre }}</span>
+                            @if ($t->category->movie_meta && isset($t->meta) && $t->meta->genres)
+                                @foreach ($t->meta->genres as $genre)
+                                    <span class="genre-label">{{ $genre->name }}</span>
+                                @endforeach
+                            @endif
+                            @if ($t->category->tv_meta && isset($t->meta) && $t->meta->genres)
+                                @foreach ($t->meta->genres as $genre)
+                                    <span class="genre-label">{{ $genre->name }}</span>
+                                @endforeach
+                            @endif
+                            @if ($t->category->game_meta && isset($t->meta) && $t->meta->genres)
+                                @foreach ($t->meta->genres as $genre)
+                                    <span class="genre-label">{{ $genre->name }}</span>
                                 @endforeach
                             @endif
                             <p class="description_plot">
-                                @if($t->movie && $t->movie->plot)
-                                    {{ $t->movie->plot }}
-                                @endif
+                                {{ $t->meta->overview ?? '' }}
                             </p>
                         </div>
                     </div>
@@ -46,10 +72,10 @@
                         <div style="float: left;">
                             @if ($t->anon == 1)
                                 <span class="badge-user text-orange text-bold">{{ strtoupper(trans('common.anonymous')) }} @if (auth()->user()->id == $t->user->id || auth()->user()->group->is_modo)
-                                        <a href="{{ route('profile', ['username' => $t->user->username, 'id' => $t->user->id]) }}">({{ $t->user->username }}
+                                        <a href="{{ route('users.show', ['username' => $t->user->username]) }}">({{ $t->user->username }}
                                                     )</a>@endif</span>
                             @else
-                                <a href="{{ route('profile', ['username' => $t->user->username, 'id' => $t->user->id]) }}">
+                                <a href="{{ route('users.show', ['username' => $t->user->username]) }}">
                                 <span class="badge-user text-bold" style="color:{{ $t->user->group->color }}; background-image:{{ $t->user->group->effect }};">
                                     <i class="{{ $t->user->group->icon }}" data-toggle="tooltip" title=""
                                        data-original-title="{{ $t->user->group->name }}"></i> {{ $t->user->username }}
@@ -59,11 +85,11 @@
                         </div>
                         <span class="badge-user text-bold" style="float: right;">
                         <i class="{{ config('other.font-awesome') }} fa-thumbs-up text-gold"></i>
-                        @if($t->movie && ($t->movie->imdbRating || $t->movie->tmdbVotes))
+                        @if($t->meta && ($t->meta->imdbRating || $t->meta->tmdbVotes))
                                 @if ($user->ratings == 1)
-                                    {{ $t->movie->imdbRating }}/10 ({{ $t->movie->imdbVotes }} @lang('torrent.votes'))
+                                    {{ $t->meta->imdbRating }}/10 ({{ $t->meta->imdbVotes }} @lang('torrent.votes'))
                                 @else
-                                    {{ $t->movie->tmdbRating }}/10 ({{ $t->movie->tmdbVotes }} @lang('torrent.votes'))
+                                    {{ $t->meta->tmdbRating }}/10 ({{ $t->meta->tmdbVotes }} @lang('torrent.votes'))
                                 @endif
                             @endif
                     </span>

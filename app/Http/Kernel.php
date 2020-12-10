@@ -1,15 +1,14 @@
 <?php
-
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http;
@@ -26,23 +25,17 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        //Default Laravel
-        \App\Http\Middleware\CheckForMaintenanceMode::class,
+        // Default Laravel
+        \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         \App\Http\Middleware\TrustProxies::class,
+        \Fruitcake\Cors\HandleCors::class,
 
-        //Secure Headers
+        // Extra
         \Bepsvpt\SecureHeaders\SecureHeadersMiddleware::class,
-
-        //HTTP2ServerPush
         \App\Http\Middleware\Http2ServerPush::class,
-
-        //HtmlEncrypt
-        //\App\Http\Middleware\HtmlEncrypt::class,
-
-        //AJAX
         //\App\Http\Middleware\ProAjaxMiddleware::class,
     ];
 
@@ -78,11 +71,11 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         'admin'         => \App\Http\Middleware\CheckForAdmin::class,
         'auth'          => \App\Http\Middleware\Authenticate::class,
+        'auth.basic'    => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'banned'        => \App\Http\Middleware\CheckIfBanned::class,
         'bindings'      => \Illuminate\Routing\Middleware\SubstituteBindings::class,
         'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
         'can'           => \Illuminate\Auth\Middleware\Authorize::class,
-        'check_ip'      => \App\Http\Middleware\CheckIfAlreadyVoted::class,
         'csrf'          => \App\Http\Middleware\VerifyCsrfToken::class,
         'guest'         => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'language'      => \App\Http\Middleware\SetLanguage::class,
@@ -90,5 +83,7 @@ class Kernel extends HttpKernel
         'owner'         => \App\Http\Middleware\CheckForOwner::class,
         'throttle'      => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'twostep'       => \App\Http\Middleware\TwoStepAuth::class,
+        'signed'        => \Illuminate\Routing\Middleware\ValidateSignature::class,
+        'verified'      => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
     ];
 }

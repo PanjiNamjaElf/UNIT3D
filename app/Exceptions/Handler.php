@@ -2,19 +2,19 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Exceptions;
 
-use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Throwable;
 
 class Handler extends ExceptionHandler
 {
@@ -46,25 +46,29 @@ class Handler extends ExceptionHandler
      *
      * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
      *
-     * @param \Exception $exception
+     * @param \Throwable $throwable
+     *
+     * @throws \Exception
      *
      * @return void
      */
-    public function report(Exception $exception)
+    public function report(Throwable $throwable)
     {
-        parent::report($exception);
+        parent::report($throwable);
     }
 
     /**
      * Render an exception into an HTTP response.
      *
      * @param \Illuminate\Http\Request $request
-     * @param \Exception               $exception
+     * @param \Throwable               $throwable
+     *
+     * @throws \Throwable
      *
      * @return \Illuminate\Http\Response
      */
-    public function render($request, Exception $exception)
+    public function render($request, Throwable $throwable)
     {
-        return parent::render($request, $exception);
+        return parent::render($request, $throwable);
     }
 }

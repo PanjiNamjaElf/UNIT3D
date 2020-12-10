@@ -2,42 +2,53 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Models;
 
 use App\Notifications\NewTopic;
+use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property int $id
- * @property int|null $position
- * @property int|null $num_topic
- * @property int|null $num_post
- * @property int|null $last_topic_id
- * @property string|null $last_topic_name
- * @property string|null $last_topic_slug
- * @property int|null $last_post_user_id
- * @property string|null $last_post_user_username
- * @property string|null $name
- * @property string|null $slug
- * @property string|null $description
- * @property int|null $parent_id
+ * App\Models\Forum.
+ *
+ * @property int                             $id
+ * @property int|null                        $position
+ * @property int|null                        $num_topic
+ * @property int|null                        $num_post
+ * @property int|null                        $last_topic_id
+ * @property string|null                     $last_topic_name
+ * @property string|null                     $last_topic_slug
+ * @property int|null                        $last_post_user_id
+ * @property string|null                     $last_post_user_username
+ * @property string|null                     $name
+ * @property string|null                     $slug
+ * @property string|null                     $description
+ * @property int|null                        $parent_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Forum[] $forums
+ * @property-read int|null $forums_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Permission[] $permissions
+ * @property-read int|null $permissions_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Topic[] $sub_topics
+ * @property-read int|null $sub_topics_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Topic[] $subscription_topics
+ * @property-read int|null $subscription_topics_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Subscription[] $subscriptions
+ * @property-read int|null $subscriptions_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Topic[] $topics
+ * @property-read int|null $topics_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Forum newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Forum newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Forum query()
@@ -60,6 +71,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Forum extends Model
 {
+    use HasFactory;
+    use Auditable;
+
     /**
      * Has Many Topic.
      *
@@ -78,7 +92,7 @@ class Forum extends Model
     public function sub_topics()
     {
         $children = $this->forums->pluck('id')->toArray();
-        if (is_array($children)) {
+        if (\is_array($children)) {
             return $this->hasMany(Topic::class)->orWhereIn('topics.forum_id', $children);
         }
 
@@ -102,9 +116,9 @@ class Forum extends Model
      */
     public function subscription_topics()
     {
-        if (auth()->user()) {
+        if (\auth()->user() !== null) {
             $id = $this->id;
-            $subscriptions = auth()->user()->subscriptions->where('topic_id', '>', '0')->pluck('topic_id')->toArray();
+            $subscriptions = \auth()->user()->subscriptions->where('topic_id', '>', '0')->pluck('topic_id')->toArray();
 
             return $this->hasMany(Topic::class)->where(function ($query) use ($id, $subscriptions) {
                 $query->whereIn('topics.id', [$id])->orWhereIn('topics.id', $subscriptions);
@@ -139,6 +153,7 @@ class Forum extends Model
      *
      * @param $poster
      * @param $topic
+     *
      * @return string
      */
     public function notifySubscribers($poster, $topic)
@@ -158,6 +173,27 @@ class Forum extends Model
     }
 
     /**
+     * Notify Staffers When New Staff Topic Is Made.
+     *
+     * @param $poster
+     * @param $topic
+     *
+     * @return string
+     */
+    public function notifyStaffers($poster, $topic)
+    {
+        $staffers = User::leftJoin('groups', 'users.group_id', '=', 'groups.id')
+            ->select('users.id')
+            ->where('users.id', '<>', $poster->id)
+            ->where('groups.is_modo', 1)
+            ->get();
+
+        foreach ($staffers as $staffer) {
+            $staffer->notify(new NewTopic('staff', $poster, $topic));
+        }
+    }
+
+    /**
      * Returns A Table With The Forums In The Category.
      *
      * @return string
@@ -171,6 +207,7 @@ class Forum extends Model
      * Returns A Table With The Forums In The Category.
      *
      * @param $forumId
+     *
      * @return string
      */
     public function getForumsInCategoryById($forumId)
@@ -192,6 +229,7 @@ class Forum extends Model
      * Count The Number Of Posts In The Forum.
      *
      * @param $forumId
+     *
      * @return string
      */
     public function getPostCount($forumId)
@@ -210,6 +248,7 @@ class Forum extends Model
      * Count The Number Of Topics In The Forum.
      *
      * @param $forumId
+     *
      * @return string
      */
     public function getTopicCount($forumId)
@@ -226,11 +265,7 @@ class Forum extends Model
      */
     public function getPermission()
     {
-        if (auth()->check()) {
-            $group = auth()->user()->group;
-        } else {
-            $group = Group::find(2);
-        }
+        $group = \auth()->check() ? \auth()->user()->group : Group::where('slug', 'guest')->first();
 
         return $group->permissions->where('forum_id', $this->id)->first();
     }

@@ -2,21 +2,21 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 use Symfony\Component\DomCrawler\Crawler;
 
 class Http2ServerPush
@@ -29,15 +29,25 @@ class Http2ServerPush
     protected $crawler;
 
     /**
+     * @var string[]
+     */
+    private const LINK_TYPE_MAP = [
+        '.CSS'  => 'style',
+        '.JS'   => 'script',
+    ];
+
+    /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure                 $next
+     * @param null                     $limit
+     * @param null                     $sizeLimit
+     * @param null                     $excludeKeywords
      *
-     * @param  null  $limit
      * @return mixed
      */
-    public function handle(Request $request, Closure $next, $limit = null)
+    public function handle(Request $request, Closure $next, $limit = null, $sizeLimit = null, $excludeKeywords = null)
     {
         $response = $next($request);
 
@@ -45,31 +55,57 @@ class Http2ServerPush
             return $response;
         }
 
-        $this->generateAndAttachLinkHeaders($response, $limit);
+        $this->generateAndAttachLinkHeaders($response, $limit, $sizeLimit, $excludeKeywords);
 
         return $response;
     }
 
+    public function getConfig($key, $default = false)
+    {
+        if (! \function_exists('config')) { // for tests..
+            return $default;
+        }
+
+        return \config('http2serverpush.'.$key, $default);
+    }
+
     /**
-     * @param  \Illuminate\Http\Response  $response
+     * @param \Illuminate\Http\Response $response
+     * @param null                      $limit
+     * @param null                      $sizeLimit
+     * @param null                      $excludeKeywords
      *
-     * @param  null  $limit
      * @return $this
      */
-    protected function generateAndAttachLinkHeaders(Response $response, $limit = null)
+    protected function generateAndAttachLinkHeaders(Response $response, $limit = null, $sizeLimit = null, $excludeKeywords = null)
     {
+        $excludeKeywords ?? $this->getConfig('exclude_keywords', []);
         $headers = $this->fetchLinkableNodes($response)
             ->flatten(1)
-            ->map(function ($url) {
-                return $this->buildLinkHeaderString($url);
-            })
-            ->filter()
+            ->map(fn ($url) => $this->buildLinkHeaderString($url))
             ->unique()
-            ->take($limit)
-            ->implode(',');
+            ->filter(function ($value, $key) use ($excludeKeywords) {
+                if (! $value) {
+                    return false;
+                }
+                $exclude_keywords = \collect($excludeKeywords)->map(fn ($keyword) => \preg_quote($keyword));
+                if ($exclude_keywords->count() <= 0) {
+                    return true;
+                }
 
-        if (! empty(trim($headers))) {
-            $this->addLinkHeader($response, $headers);
+                return ! \preg_match('%('.$exclude_keywords->implode('|').')%i', $value);
+            })
+            ->take($limit);
+
+        $sizeLimit ??= \max(1, (int) $this->getConfig('size_limit', 32 * 1_024));
+        $headersText = \trim($headers->implode(','));
+        while (\strlen($headersText) > $sizeLimit) {
+            $headers->pop();
+            $headersText = \trim($headers->implode(','));
+        }
+
+        if (! empty($headersText)) {
+            $this->addLinkHeader($response, $headersText);
         }
 
         return $this;
@@ -102,7 +138,7 @@ class Http2ServerPush
     {
         $crawler = $this->getCrawler($response);
 
-        return collect($crawler->filter('link, script[src]')->extract(['src', 'href']));
+        return \collect($crawler->filter('link:not([rel*="icon"]), script[src], img[src], object[data]')->extract(['src', 'href', 'data']));
     }
 
     /**
@@ -114,16 +150,13 @@ class Http2ServerPush
      */
     private function buildLinkHeaderString($url)
     {
-        $linkTypeMap = [
-            '.CSS'  => 'style',
-            '.JS'   => 'script',
-        ];
+        $type = \collect(self::LINK_TYPE_MAP)->first(fn ($type, $extension) => Str::contains(\strtoupper($url), $extension));
+        if (! \preg_match('#^https?://#i', $url)) {
+            $basePath = $this->getConfig('base_path', '/');
+            $url = $basePath.\ltrim($url, $basePath);
+        }
 
-        $type = collect($linkTypeMap)->first(function ($type, $extension) use ($url) {
-            return Str::contains(strtoupper($url), $extension);
-        });
-
-        return is_null($type) ? null : "<{$url}>; rel=preload; as={$type}";
+        return \is_null($type) ? null : \sprintf('<%s>; rel=preload; as=%s', $url, $type);
     }
 
     /**

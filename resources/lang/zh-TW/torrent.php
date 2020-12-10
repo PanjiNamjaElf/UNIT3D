@@ -1,4 +1,15 @@
 <?php
+/**
+ * NOTICE OF LICENSE.
+ *
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
+ * The details is bundled with this project in the file LICENSE.txt.
+ *
+ * @project    UNIT3D Community Edition
+ *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
+ * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
+ */
 
 return [
     'activity'                 => '個人現況',
@@ -60,7 +71,7 @@ return [
     'freeleech-token'          => '免費令',
     'general'                  => 'General',
     'genre'                    => '題材',
-    'genre-tags'               => '題材標記',
+    'genre-tags'               => '題材',
     'global-double-upload'     => '全站雙倍上傳收益',
     'global-freelech'          => '全站免費',
     'grant'                    => '授予',
@@ -82,8 +93,8 @@ return [
     'immune'                   => '豁免',
     'info'                     => '資訊',
     'info-hash'                => '校驗碼',
-    'internal'                 => '禁轉',
-    'internal-release'         => '發佈禁轉',
+    'internal'                 => '內部組',
+    'internal-release'         => '内部組發佈',
     'last-seed-activity'       => 'Last seed activity',
     'last-seeder'              => '你是碩果僅存的種子! (必須完成播種3次)',
     'last-update'              => '最後更新',

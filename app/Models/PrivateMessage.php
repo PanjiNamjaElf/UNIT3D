@@ -2,32 +2,39 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Models;
 
 use App\Helpers\Bbcode;
+use App\Helpers\Linkify;
+use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use voku\helper\AntiXSS;
 
 /**
- * @property int $id
- * @property int $sender_id
- * @property int $receiver_id
- * @property string $subject
- * @property string $message
- * @property int $read
- * @property int|null $related_to
+ * App\Models\PrivateMessage.
+ *
+ * @property int                             $id
+ * @property int                             $sender_id
+ * @property int                             $receiver_id
+ * @property string                          $subject
+ * @property string                          $message
+ * @property int                             $read
+ * @property int|null                        $related_to
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\User $receiver
  * @property-read \App\Models\User $sender
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\PrivateMessage newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\PrivateMessage newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\PrivateMessage query()
@@ -44,6 +51,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PrivateMessage extends Model
 {
+    use HasFactory;
+    use Auditable;
+
     /**
      * Belongs To A User.
      *
@@ -71,6 +81,20 @@ class PrivateMessage extends Model
     }
 
     /**
+     * Set The PM Message After Its Been Purified.
+     *
+     * @param string $value
+     *
+     * @return void
+     */
+    public function setMessageAttribute($value)
+    {
+        $antiXss = new AntiXSS();
+
+        $this->attributes['message'] = $antiXss->xss_clean($value);
+    }
+
+    /**
      * Parse Content And Return Valid HTML.
      *
      * @return string Parsed BBCODE To HTML
@@ -78,7 +102,8 @@ class PrivateMessage extends Model
     public function getMessageHtml()
     {
         $bbcode = new Bbcode();
+        $linkify = new Linkify();
 
-        return $bbcode->parse($this->message, true);
+        return $bbcode->parse($linkify->linky($this->message), true);
     }
 }

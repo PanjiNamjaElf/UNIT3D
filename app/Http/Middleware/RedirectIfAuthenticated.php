@@ -1,15 +1,14 @@
 <?php
-
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Middleware;
@@ -23,14 +22,18 @@ class RedirectIfAuthenticated
      *
      * @param \Illuminate\Http\Request $request
      * @param \Closure                 $next
-     * @param string|null              $guard
+     * @param string[]|null            ...$guards
      *
      * @return mixed
      */
-    public function handle($request, Closure $next, $guard = null)
+    public function handle($request, Closure $next, ...$guards)
     {
-        if (auth()->guard($guard)->check()) {
-            return redirect()->to('/');
+        $guards = empty($guards) ? [null] : $guards;
+
+        foreach ($guards as $guard) {
+            if (\auth()->guard($guard)->check()) {
+                return \redirect()->route('home.index');
+            }
         }
 
         return $next($request);

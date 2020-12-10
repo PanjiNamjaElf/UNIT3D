@@ -2,21 +2,25 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     Poppabear
  */
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
 use App\Interfaces\WishInterface;
+use App\Models\User;
+use App\Services\Tmdb\Client\Movie;
+use Illuminate\Http\Request;
 
+/**
+ * @see \Tests\Todo\Feature\Http\Controllers\WishControllerTest
+ */
 class WishController extends Controller
 {
     /**
@@ -35,70 +39,94 @@ class WishController extends Controller
     }
 
     /**
-     * Get Wish List.
+     * Get A Users Wishlist.
      *
-     * @param $uid
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\User         $username
      *
-     * @return void
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function index($uid)
+    public function index(Request $request, $username)
     {
+        $user = User::with('wishes')->where('username', '=', $username)->firstOrFail();
+
+        \abort_unless(($request->user()->group->is_modo || $request->user()->id == $user->id), 403);
+
+        $wishes = $user->wishes()->latest()->paginate(25);
+
+        return \view('user.wishlist', [
+            'user'               => $user,
+            'wishes'             => $wishes,
+            'route'              => 'wish',
+        ]);
     }
 
     /**
      * Add New Wish.
      *
      * @param \Illuminate\Http\Request $request
-     * @param $uid
+     *
+     * @throws \JsonException
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request, $uid)
+    public function store(Request $request)
     {
-        $imdb = Str::startsWith($request->get('imdb'), 'tt') ? $request->get('imdb') : 'tt'.$request->get('imdb');
+        $user = $request->user();
+        if ($request->get('tmdb') === 0) {
+            return \redirect()
+                ->route('wishes.index', ['username' => $user->username])
+                ->withErrors('TMDB ID Required');
+        }
 
-        if ($this->wish->exists($uid, $imdb)) {
-            return redirect()
-                ->route('user_wishlist', ['slug' => $request->user()->slug, 'id' => $uid])
+        $tmdb = $request->get('tmdb');
+
+        if ($this->wish->exists($user->id, $tmdb)) {
+            return \redirect()
+                ->route('wishes.index', ['username' => $user->username])
                 ->withErrors('Wish already exists!');
         }
 
-        $omdb = $this->wish->omdbRequest($imdb);
-        if ($omdb === null || $omdb === false) {
-            return redirect()
-                ->route('user_wishlist', ['slug' => $request->user()->slug, 'id' => $uid])
-                ->withErrors('IMDB Bad Request!');
+        $client = new Movie($tmdb);
+        $meta = $client->index();
+
+        if ($meta === null || $meta === false) {
+            return \redirect()
+                ->route('wishes.index', ['username' => $user->username])
+                ->withErrors('TMDM Bad Request!');
         }
 
-        $source = $this->wish->getSource($imdb);
+        $source = $this->wish->getSource($tmdb);
 
         $this->wish->create([
-            'title'   => $omdb['Title'].' ('.$omdb['Year'].')',
-            'type'    => $omdb['Type'],
-            'imdb'    => $imdb,
+            'title'   => $meta['title'].' ('.$meta['release_date'].')',
+            'type'    => 'Movie',
+            'tmdb'    => $tmdb,
             'source'  => $source,
-            'user_id' => $uid,
+            'user_id' => $user->id,
         ]);
 
-        return redirect()
-            ->route('user_wishlist', ['slug' => $request->user()->slug, 'id' => $uid])
+        return \redirect()
+            ->route('wishes.index', ['username' => $user->username])
             ->withSuccess('Wish Successfully Added!');
     }
 
     /**
      * Delete A Wish.
      *
-     * @param $uid
-     * @param $id
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\Wish         $id
      *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function destroy(Request $request, $uid, $id)
+    public function destroy(Request $request, $id)
     {
+        $user = $request->user();
+
         $this->wish->delete($id);
 
-        return redirect()
-            ->route('user_wishlist', ['slug' => $request->user()->slug, 'id' => $uid])
+        return \redirect()
+            ->route('wishes.index', ['username' => $user->username])
             ->withSuccess('Wish Successfully Removed!');
     }
 }

@@ -2,21 +2,21 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Notifications;
 
 use App\Models\Torrent;
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Notification;
 
 class NewReseedRequest extends Notification implements ShouldQueue
 {
@@ -27,7 +27,7 @@ class NewReseedRequest extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      *
-     * @param  Torrent  $torrent
+     * @param Torrent $torrent
      */
     public function __construct(Torrent $torrent)
     {
@@ -55,12 +55,12 @@ class NewReseedRequest extends Notification implements ShouldQueue
      */
     public function toArray($notifiable)
     {
-        $appurl = config('app.url');
+        $appurl = \config('app.url');
 
         return [
             'title' => 'New Reseed Request',
-            'body'  => "Some time ago, you downloaded: {$this->torrent->name}. Now its dead and someone has requested a reseed on it. If you still have this torrent in storage, please consider reseeding it!",
-            'url'   => "{$appurl}/torrents/{$this->torrent->slug}.{$this->torrent->id}",
+            'body'  => \sprintf('Some time ago, you downloaded: %s. Now its dead and someone has requested a reseed on it. If you still have this torrent in storage, please consider reseeding it!', $this->torrent->name),
+            'url'   => \sprintf('%s/torrents/%s', $appurl, $this->torrent->id),
         ];
     }
 }

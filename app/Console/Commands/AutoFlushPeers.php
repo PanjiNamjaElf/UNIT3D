@@ -2,22 +2,25 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     Mr.G
  */
 
 namespace App\Console\Commands;
 
-use Carbon\Carbon;
-use App\Models\Peer;
 use App\Models\History;
+use App\Models\Peer;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
+/**
+ * @see \Tests\Unit\Console\Commands\AutoFlushPeersTest
+ */
 class AutoFlushPeers extends Command
 {
     /**
@@ -47,12 +50,14 @@ class AutoFlushPeers extends Command
     /**
      * Execute the console command.
      *
+     * @throws \Exception
+     *
      * @return mixed
      */
     public function handle()
     {
-        $current = new Carbon();
-        $peers = Peer::select(['id', 'info_hash', 'user_id', 'updated_at'])->where('updated_at', '<', $current->copy()->subHours(2)->toDateTimeString())->get();
+        $carbon = new Carbon();
+        $peers = Peer::select(['id', 'info_hash', 'user_id', 'updated_at'])->where('updated_at', '<', $carbon->copy()->subHours(2)->toDateTimeString())->get();
 
         foreach ($peers as $peer) {
             $history = History::where('info_hash', '=', $peer->info_hash)->where('user_id', '=', $peer->user_id)->first();
@@ -62,5 +67,6 @@ class AutoFlushPeers extends Command
             }
             $peer->delete();
         }
+        $this->comment('Automated Flush Ghost Peers Command Complete');
     }
 }

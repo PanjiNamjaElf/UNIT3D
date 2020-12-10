@@ -2,21 +2,24 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Console\Commands;
 
-use Carbon\Carbon;
 use App\Models\History;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
+/**
+ * @see \Tests\Unit\Console\Commands\AutoCorrectHistoryTest
+ */
 class AutoCorrectHistory extends Command
 {
     /**
@@ -46,16 +49,19 @@ class AutoCorrectHistory extends Command
     /**
      * Execute the console command.
      *
+     * @throws \Exception
+     *
      * @return mixed
      */
     public function handle()
     {
-        $current = new Carbon();
-        $history = History::select(['id', 'active', 'updated_at'])->where('active', '=', 1)->where('updated_at', '<', $current->copy()->subHours(2)->toDateTimeString())->get();
+        $carbon = new Carbon();
+        $history = History::select(['id', 'active', 'updated_at'])->where('active', '=', 1)->where('updated_at', '<', $carbon->copy()->subHours(2)->toDateTimeString())->get();
 
         foreach ($history as $h) {
             $h->active = false;
             $h->save();
         }
+        $this->comment('Automated History Record Correction Command Complete');
     }
 }

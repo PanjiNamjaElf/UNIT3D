@@ -2,30 +2,48 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Helpers;
 
 class MediaInfo
 {
-    private $regex_section = "/^(?:(?:general|video|audio|text|menu)(?:\s\#\d+?)*)$/i";
+    private const REGEX_SECTION = "/^(?:(?:general|video|audio|text|menu)(?:\s\#\d+?)*)$/i";
+
+    /**
+     * @var string[]
+     */
+    private const REPLACE = [
+        ' '        => '',
+        'channels' => 'ch',
+        'channel'  => 'ch',
+        '1ch'      => '1.0ch',
+        '7ch'      => '6.1ch',
+        '6ch'      => '5.1ch',
+        '2ch'      => '2.0ch',
+    ];
+
+    /**
+     * @var int[]
+     */
+    private const FACTORS = ['b' => 0, 'kb' => 1, 'mb' => 2, 'gb' => 3, 'tb' => 4, 'pb' => 5, 'eb' => 6, 'zb' => 7, 'yb' => 8];
 
     public function parse($string)
     {
-        $string = trim($string);
-        $lines = preg_split("/\r\n|\n|\r/", $string);
+        $string = \trim($string);
+        $lines = \preg_split("/\r\n|\n|\r/", $string);
 
         $output = [];
         foreach ($lines as $line) {
-            $line = trim($line); // removed strtolower, unnecessary with the i-switch in the regexp (caseless) and adds problems with values; added it in the required places instead.
-            if (preg_match($this->regex_section, $line)) {
+            $line = \trim($line); // removed strtolower, unnecessary with the i-switch in the regexp (caseless) and adds problems with values; added it in the required places instead.
+            if (\preg_match(self::REGEX_SECTION, $line)) {
                 $section = $line;
                 $output[$section] = [];
             }
@@ -34,7 +52,7 @@ class MediaInfo
             }
         }
 
-        if (count($output)) {
+        if (\count($output) > 0) {
             $output = $this->parseSections($output);
         }
 
@@ -45,9 +63,9 @@ class MediaInfo
     {
         $output = [];
         foreach ($sections as $key => $section) {
-            $key_section = strtolower(explode(' ', $key)[0]);
+            $key_section = \strtolower(\explode(' ', $key)[0]);
             if (! empty($section)) {
-                if ($key_section == 'general') {
+                if ($key_section === 'general') {
                     $output[$key_section] = $this->parseProperty($section, $key_section);
                 } else {
                     $output[$key_section][] = $this->parseProperty($section, $key_section);
@@ -64,13 +82,13 @@ class MediaInfo
         foreach ($sections as $info) {
             $property = null;
             $value = null;
-            $info = explode(':', $info, 2);
-            if (count($info) >= 2) {
-                $property = trim(strtolower($info[0]));
-                $value = trim($info[1]);
+            $info = \explode(':', $info, 2);
+            if (\count($info) >= 2) {
+                $property = \strtolower(\trim($info[0]));
+                $value = \trim($info[1]);
             }
             if ($property && $value) {
-                switch (strtolower($section)) {
+                switch (\strtolower($section)) {
                     case 'general':
                         switch ($property) {
                             case 'complete name':
@@ -147,7 +165,7 @@ class MediaInfo
                                 break;
                             case 'display aspect ratio':
                             case 'displayaspectratio':
-                                $output['aspect_ratio'] = str_replace('/', ':', $value); // mediainfo sometimes uses / instead of :
+                                $output['aspect_ratio'] = \str_replace('/', ':', $value); // mediainfo sometimes uses / instead of :
                                 break;
                             case 'bit rate':
                             case 'bitrate':
@@ -186,11 +204,8 @@ class MediaInfo
                                 $output['format_profile'] = $value;
 
                                 break;
-                            case 'title':
-                                $output['title'] = $value;
-
-                                break;
                             case 'color primaries':
+                            case 'title':
                                 $output['title'] = $value;
 
                                 break;
@@ -283,8 +298,8 @@ class MediaInfo
 
     public static function stripPath($string)
     {
-        $string = str_replace('\\', '/', $string);
-        $path_parts = pathinfo($string);
+        $string = \str_replace('\\', '/', $string);
+        $path_parts = \pathinfo($string);
 
         return $path_parts['basename'];
     }
@@ -292,7 +307,7 @@ class MediaInfo
     private function parseFileSize($string)
     {
         $number = (float) $string;
-        preg_match('/[KMGTPEZ]/i', $string, $size);
+        \preg_match('#[KMGTPEZ]#i', $string, $size);
         if (! empty($size[0])) {
             $number = $this->computerSize($number, $size[0].'b');
         }
@@ -302,30 +317,17 @@ class MediaInfo
 
     private function parseBitRate($string)
     {
-        $string = str_replace(' ', '', strtolower($string));
-        $string = str_replace('kbps', ' kbps', $string);
-
-        return $string;
+        return \str_replace([' ', 'kbps'], ['', ' kbps'], \strtolower($string));
     }
 
     private function parseWidthHeight($string)
     {
-        return str_replace(['pixels', ' '], null, strtolower($string));
+        return \str_replace(['pixels', ' '], null, \strtolower($string));
     }
 
     private function parseAudioChannels($string)
     {
-        $replace = [
-            ' '        => '',
-            'channels' => 'ch',
-            'channel'  => 'ch',
-            '1ch'      => '1.0ch',
-            '7ch'      => '6.1ch',
-            '6ch'      => '5.1ch',
-            '2ch'      => '2.0ch',
-        ];
-
-        return str_ireplace(array_keys($replace), $replace, $string);
+        return \str_ireplace(\array_keys(self::REPLACE), self::REPLACE, $string);
     }
 
     private function formatOutput($data)
@@ -349,7 +351,7 @@ class MediaInfo
             $output['general'] = null;
         } else {
             if (isset($data['general']['format'])) {
-                $output['general'][] = ucfirst($data['general']['format']);
+                $output['general'][] = \ucfirst($data['general']['format']);
             }
             if (isset($data['general']['duration'])) {
                 $output['general'][] = $data['general']['duration'];
@@ -363,9 +365,9 @@ class MediaInfo
             foreach ($data['video'] as $video_element) {
                 $temp_video_output = [];
                 if (isset($video_element['format'])) {
-                    $temp_video_output[] = strtoupper($video_element['format']);
+                    $temp_video_output[] = \strtoupper($video_element['format']);
                 }
-                if (isset($video_element['width']) && isset($video_element['height'])) {
+                if (isset($video_element['width'], $video_element['height'])) {
                     $temp_video_output[] = $video_element['width'].' x '.$video_element['height'];
                 }
                 foreach (['aspect_ratio', 'frame_rate', 'bit_depth', 'bit_rate', 'format_profile', 'scan_type', 'title', 'color primaries'] as $property) {
@@ -413,7 +415,7 @@ class MediaInfo
                         $temp_text_output[] = $text_element[$property];
                     }
                 }
-                if (isset($text_element['forced']) && strtolower($text_element['forced']) == 'yes') {
+                if (isset($text_element['forced']) && \strtolower($text_element['forced']) === 'yes') {
                     $temp_text_output[] = 'Forced';
                 }
 
@@ -435,12 +437,10 @@ class MediaInfo
     private function computerSize($number, $size)
     {
         $bytes = (float) $number;
-        $size = strtolower($size);
+        $size = \strtolower($size);
 
-        $factors = ['b' => 0, 'kb' => 1, 'mb' => 2, 'gb' => 3, 'tb' => 4, 'pb' => 5, 'eb' => 6, 'zb' => 7, 'yb' => 8];
-
-        if (isset($factors[$size])) {
-            return (float) number_format($bytes * pow(1024, $factors[$size]), 2, '.', '');
+        if (isset(self::FACTORS[$size])) {
+            return (float) \number_format($bytes * \pow(1_024, self::FACTORS[$size]), 2, '.', '');
         }
 
         return $bytes;

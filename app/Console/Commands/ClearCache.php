@@ -2,19 +2,22 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     Poppabear
  */
 
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 
+/**
+ * @see \Tests\Unit\Console\Commands\ClearCacheTest
+ */
 class ClearCache extends Command
 {
     /**
@@ -29,7 +32,7 @@ class ClearCache extends Command
      *
      * @var string
      */
-    protected $description = 'Clears Several Common Cache\'s ...';
+    protected $description = "Clears Several Common Cache's ...";
 
     /**
      * Create a new command instance.
@@ -48,7 +51,7 @@ class ClearCache extends Command
      */
     public function handle()
     {
-        $this->comment('Clearing several common cache\'s ...');
+        $this->comment("Clearing several common cache's ...");
         $this->call('view:clear');
         $this->call('route:clear');
         $this->call('config:clear');

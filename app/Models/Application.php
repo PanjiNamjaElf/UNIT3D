@@ -2,34 +2,42 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
+ *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Hootlex\Moderation\Moderatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property int $id
- * @property string $type
- * @property string $email
- * @property string|null $referrer
- * @property int $status
+ * App\Models\Application.
+ *
+ * @property int                             $id
+ * @property string                          $type
+ * @property string                          $email
+ * @property string|null                     $referrer
+ * @property int                             $status
  * @property \Illuminate\Support\Carbon|null $moderated_at
- * @property int|null $moderated_by
- * @property int|null $accepted_by
+ * @property int|null                        $moderated_by
+ * @property int|null                        $accepted_by
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ApplicationImageProof[] $imageProofs
+ * @property-read int|null $image_proofs_count
  * @property-read \App\Models\User|null $moderated
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ApplicationUrlProof[] $urlProofs
+ * @property-read int|null $url_proofs_count
  * @property-read \App\Models\User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Application newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Application newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Application query()
@@ -47,7 +55,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Application extends Model
 {
+    use HasFactory;
     use Moderatable;
+    use Auditable;
 
     /**
      * Belongs To A User.

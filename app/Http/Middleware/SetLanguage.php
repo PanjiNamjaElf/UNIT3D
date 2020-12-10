@@ -2,20 +2,20 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Middleware;
 
-use Closure;
-use Carbon\Carbon;
 use App\Models\Language;
+use Carbon\Carbon;
+use Closure;
 use Illuminate\Support\Facades\App;
 
 class SetLanguage
@@ -29,27 +29,27 @@ class SetLanguage
     {
         // Check if is allowed and set default locale if not
         if (! Language::allowed($locale)) {
-            $locale = config('app.locale');
+            $locale = \config('app.locale');
         }
 
         // Set app language
         App::setLocale($locale);
 
         // Set carbon language
-        if (config('language.carbon')) {
+        if (\config('language.carbon')) {
             // Carbon uses only language code
-            if (config('language.mode.code') == 'long') {
-                $locale = explode('-', $locale)[0];
+            if (\config('language.mode.code') == 'long') {
+                $locale = \explode('-', $locale)[0];
             }
 
             Carbon::setLocale($locale);
         }
 
         // Set date language
-        if (config('language.date')) {
+        if (\config('language.date')) {
             // Date uses only language code
-            if (config('language.mode.code') == 'long') {
-                $locale = explode('-', $locale)[0];
+            if (\config('language.mode.code') == 'long') {
+                $locale = \explode('-', $locale)[0];
             }
 
             \Date::setLocale($locale);
@@ -58,12 +58,12 @@ class SetLanguage
 
     public function setDefaultLocale()
     {
-        $this->setLocale(config('app.locale'));
+        $this->setLocale(\config('app.locale'));
     }
 
     public function setUserLocale()
     {
-        $user = auth()->user();
+        $user = \auth()->user();
 
         if ($user->locale) {
             $this->setLocale($user->locale);
@@ -75,7 +75,7 @@ class SetLanguage
     public function setSystemLocale($request)
     {
         if ($request->session()->has('locale')) {
-            $this->setLocale(session('locale'));
+            $this->setLocale(\session('locale'));
         } else {
             $this->setDefaultLocale();
         }
@@ -91,7 +91,9 @@ class SetLanguage
      */
     public function handle($request, Closure $next)
     {
-        if ($request->user()) {
+        if ($request->has('lang')) {
+            $this->setLocale($request->get('lang'));
+        } elseif (\auth()->check()) {
             $this->setUserLocale();
         } else {
             $this->setSystemLocale($request);

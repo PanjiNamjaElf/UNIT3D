@@ -1,5 +1,6 @@
 let mix = require('laravel-mix');
 require('laravel-mix-sri');
+require('laravel-mix-purgecss');
 
 /*
  |--------------------------------------------------------------------------
@@ -10,12 +11,23 @@ require('laravel-mix-sri');
  |
  */
 
-mix.version()
+mix.version();
+mix.options({
+  processCssUrls: false
+})
+
     /*
      * Sourced asset dependencies via node_modules and JS bootstrapping
      */
     .js('resources/js/app.js', 'public/js')
     .sass('resources/sass/app.scss', 'public/css')
+    .purgeCss({
+      enabled: true,
+
+      extensions: ['html', 'php', 'js', 'vue'],
+
+      whitelistPatterns: [/tooltip/, /fa/, /far/, /fas/, /fal/],
+    })
     .generateIntegrityHash()
 
     /*
@@ -32,6 +44,7 @@ mix.version()
     .sass('resources/sass/themes/dark-red.scss', 'public/css/themes/dark-red.css')
     .sass('resources/sass/themes/dark-teal.scss', 'public/css/themes/dark-teal.css')
     .sass('resources/sass/themes/dark-yellow.scss', 'public/css/themes/dark-yellow.css')
+    .sass('resources/sass/themes/cosmic-void.scss', 'public/css/themes/cosmic-void.css')
     .generateIntegrityHash()
 
     /*
@@ -43,7 +56,6 @@ mix.version()
      */
     .sass('resources/sass/main/login.scss', 'public/css/main/login.css')
     .sass('resources/sass/main/twostep.scss', 'public/css/main/twostep.css')
-    .babel('resources/js/unit3d/twostep.js', 'public/js/twostep.js')
     .generateIntegrityHash()
 
     /*
@@ -51,25 +63,19 @@ mix.version()
      *
      * Note: The order of this array will matter, no different then linking these assets manually in the html
      */
-    .babel(['resources/js/unit3d/hoe.js', 'resources/js/unit3d/blutopia.js', 'resources/js/unit3d/helper.js'], 'public/js/unit3d.js')
+    .babel(['resources/js/unit3d/hoe.js', 'resources/js/unit3d/custom.js', 'resources/js/unit3d/tmdb.js', 'resources/js/unit3d/parser.js', 'resources/js/unit3d/helper.js'], 'public/js/unit3d.js')
+    .generateIntegrityHash()
 
     /*
-     * Copy emojione assets
+     * Copy assets
      */
-    .copy('node_modules/emojione-assets/png/64', 'public/img/joypixels');
+    .copy('resources/sass/vendor/webfonts/wysibb', 'public/fonts/wysibb')
+    .copy('resources/sass/vendor/webfonts/font-awesome', 'public/fonts/font-awesome')
+    .copy('resources/sass/vendor/webfonts/bootstrap', 'public/fonts/bootstrap')
 
-// Full API
-// mix.js(src, output);
-// mix.extract(vendorLibs);
-// mix.sass(src, output);
-// mix.less(src, output);
-// mix.combine(files, destination);
-// mix.copy(from, to);
-// mix.minify(file);
-// mix.sourceMaps(); // Enable sourcemaps
-// mix.version(); // Enable versioning.
-// mix.disableNotifications();
-// mix.setPublicPath('path/to/public');
-// mix.autoload({}); <-- Will be passed to Webpack's ProvidePlugin.
-// mix.webpackConfig({}); <-- Override webpack.config.js, without editing the file directly.
-// mix.then(function () {}) <-- Will be triggered each time Webpack finishes building.
+    /*
+     * Extra JS
+     */
+    .js('resources/js/unit3d/imgbb.js', 'public/js')
+    .generateIntegrityHash();
+

@@ -2,42 +2,46 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     Mr.G
  */
 
 namespace App\Models;
 
-use Kyslik\ColumnSortable\Sortable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Kyslik\ColumnSortable\Sortable;
 
 /**
- * @property int $id
- * @property int $user_id
- * @property string|null $agent
- * @property string $info_hash
- * @property int|null $uploaded
- * @property int|null $actual_uploaded
- * @property int|null $client_uploaded
- * @property int|null $downloaded
- * @property int|null $actual_downloaded
- * @property int|null $client_downloaded
- * @property int $seeder
- * @property int $active
- * @property int $seedtime
- * @property int $immune
- * @property int $hitrun
- * @property int $prewarn
+ * App\Models\History.
+ *
+ * @property int                             $id
+ * @property int                             $user_id
+ * @property string|null                     $agent
+ * @property string                          $info_hash
+ * @property int|null                        $uploaded
+ * @property int|null                        $actual_uploaded
+ * @property int|null                        $client_uploaded
+ * @property int|null                        $downloaded
+ * @property int|null                        $actual_downloaded
+ * @property int|null                        $client_downloaded
+ * @property int                             $seeder
+ * @property int                             $active
+ * @property int                             $seedtime
+ * @property int                             $immune
+ * @property int                             $hitrun
+ * @property int                             $prewarn
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $completed_at
  * @property-read \App\Models\Torrent $torrent
  * @property-read \App\Models\User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\History newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\History newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\History query()
@@ -65,6 +69,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class History extends Model
 {
+    use HasFactory;
     use Sortable;
 
     /**

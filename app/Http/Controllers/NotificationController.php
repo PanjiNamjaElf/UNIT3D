@@ -1,23 +1,24 @@
 <?php
-
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
-use App\Models\Notification;
 use Illuminate\Http\Request;
 
+/**
+ * @see \Tests\Todo\Feature\Http\Controllers\NotificationControllerTest
+ */
 class NotificationController extends Controller
 {
     /**
@@ -31,19 +32,19 @@ class NotificationController extends Controller
     {
         $notifications = $request->user()->notifications()->paginate(25);
 
-        return view('notification.index', ['notifications' => $notifications]);
+        return \view('notification.index', ['notifications' => $notifications]);
     }
 
     /**
      * Uses Input's To Put Together A Search.
      *
      * @param \Illuminate\Http\Request $request
-     * @param Notification $notification
+     *
+     * @throws \Throwable
      *
      * @return array
-     * @throws \Throwable
      */
-    public function faceted(Request $request, Notification $notification)
+    public function faceted(Request $request)
     {
         $user = $request->user();
 
@@ -127,9 +128,9 @@ class NotificationController extends Controller
 
         $notifications = $notification->paginate(25);
 
-        return view('notification.results', [
+        return \view('notification.results', [
             'user'            => $user,
-            'notifications' => $notifications,
+            'notifications'   => $notifications,
         ])->render();
     }
 
@@ -137,16 +138,16 @@ class NotificationController extends Controller
      * Show A Notification And Mark As Read.
      *
      * @param \Illuminate\Http\Request $request
-     * @param $id
+     * @param \App\Models\Notification $id
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function show(Request $request, $id)
     {
         $notification = $request->user()->notifications()->findOrFail($id);
         $notification->markAsRead();
 
-        return redirect()->to($notification->data['url'])
+        return \redirect()->to($notification->data['url'])
             ->withSuccess('Notification Marked As Read!');
     }
 
@@ -154,27 +155,27 @@ class NotificationController extends Controller
      * Set A Notification To Read.
      *
      * @param \Illuminate\Http\Request $request
-     * @param $id
+     * @param \App\Models\Notification $id
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, $id)
     {
         $notification = $request->user()->notifications()->where('id', '=', $id)->first();
 
         if (! $notification) {
-            return redirect()->route('notifications.index')
+            return \redirect()->route('notifications.index')
                 ->withErrors('Notification Does Not Exist!');
         }
 
         if ($notification->read_at != null) {
-            return redirect()->route('notifications.index')
+            return \redirect()->route('notifications.index')
                 ->withErrors('Notification Already Marked As Read!');
         }
 
         $notification->markAsRead();
 
-        return redirect()->route('notifications.index')
+        return \redirect()->route('notifications.index')
             ->withSuccess('Notification Marked As Read!');
     }
 
@@ -183,15 +184,16 @@ class NotificationController extends Controller
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return Illuminate\Http\RedirectResponse
      * @throws \Exception
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function updateAll(Request $request)
     {
-        $current = new Carbon();
-        $request->user()->unreadNotifications()->update(['read_at' => $current]);
+        $carbon = new Carbon();
+        $request->user()->unreadNotifications()->update(['read_at' => $carbon]);
 
-        return redirect()->route('notifications.index')
+        return \redirect()->route('notifications.index')
             ->withSuccess('All Notifications Marked As Read!');
     }
 
@@ -199,15 +201,15 @@ class NotificationController extends Controller
      * Delete A Notification.
      *
      * @param \Illuminate\Http\Request $request
-     * @param $id
+     * @param \App\Models\Notification $id
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(Request $request, $id)
     {
         $request->user()->notifications()->findOrFail($id)->delete();
 
-        return redirect()->route('notifications.index')
+        return \redirect()->route('notifications.index')
             ->withSuccess('Notification Deleted!');
     }
 
@@ -216,13 +218,13 @@ class NotificationController extends Controller
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroyAll(Request $request)
     {
         $request->user()->notifications()->delete();
 
-        return redirect()->route('notifications.index')
+        return \redirect()->route('notifications.index')
             ->withSuccess('All Notifications Deleted!');
     }
 }

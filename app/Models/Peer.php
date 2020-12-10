@@ -2,39 +2,43 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     Mr.G
  */
 
 namespace App\Models;
 
-use Kyslik\ColumnSortable\Sortable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Kyslik\ColumnSortable\Sortable;
 
 /**
- * @property int $id
- * @property string|null $peer_id
- * @property string|null $md5_peer_id
- * @property string|null $info_hash
- * @property string|null $ip
- * @property int|null $port
- * @property string|null $agent
- * @property int|null $uploaded
- * @property int|null $downloaded
- * @property int|null $left
- * @property int|null $seeder
+ * App\Models\Peer.
+ *
+ * @property int                             $id
+ * @property string|null                     $peer_id
+ * @property string|null                     $md5_peer_id
+ * @property string|null                     $info_hash
+ * @property string|null                     $ip
+ * @property int|null                        $port
+ * @property string|null                     $agent
+ * @property int|null                        $uploaded
+ * @property int|null                        $downloaded
+ * @property int|null                        $left
+ * @property int|null                        $seeder
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property int|null $torrent_id
- * @property int|null $user_id
+ * @property int|null                        $torrent_id
+ * @property int|null                        $user_id
  * @property-read \App\Models\Torrent $seed
  * @property-read \App\Models\Torrent|null $torrent
  * @property-read \App\Models\User|null $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Peer newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Peer newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Peer query()
@@ -58,6 +62,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Peer extends Model
 {
+    use HasFactory;
     use Sortable;
 
     /**

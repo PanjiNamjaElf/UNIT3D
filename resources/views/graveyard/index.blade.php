@@ -13,63 +13,64 @@
 @endsection
 
 @section('content')
-    <!-- Search -->
     <div class="container box">
         <div class="text-center">
             <h3 class="filter-title">@lang('torrent.filters')</h3>
         </div>
-        <form role="form" method="GET" action="GraveyardController@index" class="form-horizontal form-condensed form-torrent-search form-bordered">
-        @csrf
-        <div class="form-group">
-            <label for="name" class="col-sm-1 label label-default">@lang('torrent.name')</label>
-            <div class="col-sm-9">
-                <input type="text" class="form-control" id="search" placeholder="@lang('torrent.name')">
+        <form role="form" method="GET" action="GraveyardController@index"
+            class="form-horizontal form-condensed form-torrent-search form-bordered">
+            @csrf
+            <div class="form-group">
+                <label for="name" class="col-sm-1 label label-default">@lang('torrent.name')</label>
+                <div class="col-sm-9">
+                    <label for="search"></label><input type="text" class="form-control" id="search"
+                        placeholder="@lang('torrent.name')">
+                </div>
             </div>
-        </div>
-
-        <div class="form-group">
-            <label for="imdb" class="col-sm-1 label label-default">ID</label>
-            <div class="col-sm-2">
-                <input type="text" class="form-control" id="imdb" placeholder="IMDB #">
+    
+            <div class="form-group">
+                <label for="imdb" class="col-sm-1 label label-default">ID</label>
+                <div class="col-sm-2">
+                    <input type="text" class="form-control" id="imdb" placeholder="IMDB #">
+                </div>
+                <div class="col-sm-2">
+                    <label for="tvdb"></label><input type="text" class="form-control" id="tvdb" placeholder="TVDB #">
+                </div>
+                <div class="col-sm-2">
+                    <label for="tmdb"></label><input type="text" class="form-control" id="tmdb" placeholder="TMDB #">
+                </div>
+                <div class="col-sm-2">
+                    <label for="mal"></label><input type="text" class="form-control" id="mal" placeholder="MAL #">
+                </div>
             </div>
-            <div class="col-sm-2">
-                <input type="text" class="form-control" id="tvdb" placeholder="TVDB #">
+    
+            <div class="form-group">
+                <label for="category" class="col-sm-1 label label-default">@lang('torrent.category')</label>
+                <div class="col-sm-10">
+                    @foreach ($repository->categories() as $id => $category)
+                        <span class="badge-user">
+                            <label class="inline">
+                                <input type="checkbox" id="{{ $category }}" value="{{ $id }}" class="category"> {{ $category }}
+                            </label>
+                        </span>
+                    @endforeach
+                </div>
             </div>
-            <div class="col-sm-2">
-                <input type="text" class="form-control" id="tmdb" placeholder="TMDB #">
+    
+            <div class="form-group">
+                <label for="type" class="col-sm-1 label label-default">@lang('torrent.type')</label>
+                <div class="col-sm-10">
+                    @foreach ($repository->types() as $id => $type)
+                        <span class="badge-user">
+                            <label class="inline">
+                                <input type="checkbox" id="{{ $type }}" value="{{ $id }}" class="type"> {{ $type }}
+                            </label>
+                        </span>
+                    @endforeach
+                </div>
             </div>
-            <div class="col-sm-2">
-                <input type="text" class="form-control" id="mal" placeholder="MAL #">
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label for="category" class="col-sm-1 label label-default">@lang('torrent.category')</label>
-            <div class="col-sm-10">
-                @foreach ($repository->categories() as $id => $category)
-                    <span class="badge-user">
-                        <label class="inline">
-                            <input type="checkbox" id="{{ $category }}" value="{{ $id }}" class="category"> {{ $category }}
-                        </label>
-                    </span>
-                @endforeach
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label for="type" class="col-sm-1 label label-default">@lang('torrent.type')</label>
-            <div class="col-sm-10">
-                @foreach ($repository->types() as $id => $type)
-                    <span class="badge-user">
-                        <label class="inline">
-                            <input type="checkbox" id="{{ $type }}" value="{{ $type }}" class="type"> {{ $type }}
-                        </label>
-                    </span>
-                @endforeach
-            </div>
-        </div>
         </form>
-
+    
         <hr>
         <div class="form-horizontal">
             <div class="form-group">
@@ -82,7 +83,7 @@
                     </select>
                 </div>
                 <div class="col-sm-3">
-                    <select id="direction" name="direction" class="form-control">
+                    <label for="direction"></label><select id="direction" name="direction" class="form-control">
                         @foreach ($repository->direction() as $value => $dir)
                             <option value="{{ $value }}">{{ $dir }}</option>
                         @endforeach
@@ -99,9 +100,7 @@
             </div>
         </div>
     </div>
-    <!-- /Search -->
-
-    <!-- Results -->
+    
     <div class="container-fluid">
         <div class="block">
             <div class="header gradient silver">
@@ -112,114 +111,125 @@
                 </div>
             </div>
             <div id="result">
-            @include('graveyard.results')
+                @include('graveyard.results')
             </div>
         </div>
     </div>
 @endsection
 
 @section('javascripts')
-    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce() }}">
-        var xhr = new XMLHttpRequest();
+    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce('script') }}">
+      let xhr = new XMLHttpRequest()
 
-        function faceted(page) {
-          var csrf = "{{ csrf_token() }}";
-          var search = $("#search").val();
-          var imdb = $("#imdb").val();
-          var tvdb = $("#tvdb").val();
-          var tmdb = $("#tmdb").val();
-          var mal = $("#mal").val();
-          var categories = [];
-          var types = [];
-          var sorting = $("#sorting").val();
-          var direction = $("#direction").val();
-          var qty = $("#qty").val();
-          $(".category:checked").each(function () {
-            categories.push($(this).val());
-          });
-          $(".type:checked").each(function () {
-            types.push($(this).val());
-          });
-
-          if (xhr !== 'undefined') {
-            xhr.abort();
-          }
-          xhr = $.ajax({
-            url: 'filterGraveyard',
-            data: {
-              _token: csrf,
-              search: search,
-              imdb: imdb,
-              tvdb: tvdb,
-              tmdb: tmdb,
-              mal: mal,
-              categories: categories,
-              types: types,
-              sorting: sorting,
-              direction: direction,
-              page: page,
-              qty: qty
-            },
-            type: 'get',
-            beforeSend: function () {
-              $("#result").html('<i class="{{ config('other.font-awesome') }} fa-spinner fa-spin fa-3x fa-fw"></i>')
+      function faceted(page) {
+          const csrf = "{{ csrf_token() }}"
+          const search = $('#search').val()
+          const imdb = $('#imdb').val()
+          const tvdb = $('#tvdb').val()
+          const tmdb = $('#tmdb').val()
+          const mal = $('#mal').val()
+          const categories = []
+          const types = []
+          const sorting = $('#sorting').val()
+          const direction = $('#direction').val()
+          const qty = $('#qty').val()
+          $(".category:checked").each(function() {
+                categories.push($(this).val());
+            });
+            $(".type:checked").each(function() {
+                types.push($(this).val());
+            });
+    
+            if (xhr !== 'undefined') {
+                xhr.abort();
             }
-          }).done(function (e) {
-            $data = $(e);
-            $("#result").html($data);
-          });
+            xhr = $.ajax({
+                url: '/graveyard/filter',
+                data: {
+                    _token: csrf,
+                    search: search,
+                    imdb: imdb,
+                    tvdb: tvdb,
+                    tmdb: tmdb,
+                    mal: mal,
+                    categories: categories,
+                    types: types,
+                    sorting: sorting,
+                    direction: direction,
+                    page: page,
+                    qty: qty
+                },
+                type: 'get',
+                beforeSend: function() {
+                    $("#result").html('<i class="{{ config('other.font-awesome') }} fa-spinner fa-spin fa-3x fa-fw"></i>')
+                }
+            }).done(function(e) {
+                $data = $(e);
+                $("#result").html($data);
+            });
         }
+    
     </script>
-    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce() }}">
-      $(window).on("load", faceted())
+    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce('script') }}">
+        $(window).on("load", faceted())
+    
     </script>
-    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce() }}">
-      $("#search").keyup(function () {
-        faceted();
-      })
+    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce('script') }}">
+        $("#search").keyup(function() {
+            faceted();
+        })
+    
     </script>
-    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce() }}">
-      $("#imdb").keyup(function () {
-        faceted();
-      })
+    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce('script') }}">
+        $("#imdb").keyup(function() {
+            faceted();
+        })
+    
     </script>
-    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce() }}">
-      $("#tvdb").keyup(function () {
-        faceted();
-      })
+    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce('script') }}">
+        $("#tvdb").keyup(function() {
+            faceted();
+        })
+    
     </script>
-    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce() }}">
-      $("#tmdb").keyup(function () {
-        faceted();
-      })
+    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce('script') }}">
+        $("#tmdb").keyup(function() {
+            faceted();
+        })
+    
     </script>
-    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce() }}">
-      $("#mal").keyup(function () {
-        faceted();
-      })
+    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce('script') }}">
+        $("#mal").keyup(function() {
+            faceted();
+        })
+    
     </script>
-    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce() }}">
-      $(".category,.type").on("click", function () {
-        faceted();
-      });
+    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce('script') }}">
+        $(".category,.type").on("click", function() {
+            faceted();
+        });
+    
     </script>
-    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce() }}">
-      $("#sorting,#direction,#qty").on('change', function () {
-        faceted();
-      });
+    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce('script') }}">
+        $("#sorting,#direction,#qty").on('change', function() {
+            faceted();
+        });
+    
     </script>
-    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce() }}">
-      $(document).on('click', '.pagination a', function (e) {
-        e.preventDefault();
-        var url = $(this).attr('href');
-        var page = url.split('page=')[1];
-        window.history.pushState("", "", url);
-        faceted(page);
-      })
+    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce('script') }}">
+        $(document).on('click', '.pagination a', function(e) {
+            e.preventDefault();
+          const url = $(this).attr('href')
+          const page = url.split('page=')[1]
+          window.history.pushState("", "", url);
+            faceted(page);
+        })
+    
     </script>
-    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce() }}">
-      $(document).ajaxComplete(function () {
-        $('[data-toggle="tooltip"]').tooltip();
-      });
+    <script nonce="{{ Bepsvpt\SecureHeaders\SecureHeaders::nonce('script') }}">
+        $(document).ajaxComplete(function() {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+    
     </script>
 @endsection

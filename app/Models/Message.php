@@ -2,33 +2,38 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Models;
 
 use App\Helpers\Bbcode;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use voku\helper\AntiXSS;
 
 /**
- * @property int $id
- * @property int $user_id
- * @property int $chatroom_id
- * @property int|null $receiver_id
- * @property int|null $bot_id
- * @property string $message
+ * App\Models\Message.
+ *
+ * @property int                             $id
+ * @property int                             $user_id
+ * @property int                             $chatroom_id
+ * @property int|null                        $receiver_id
+ * @property int|null                        $bot_id
+ * @property string                          $message
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\Bot|null $bot
  * @property-read \App\Models\Chatroom $chatroom
  * @property-read \App\Models\User|null $receiver
  * @property-read \App\Models\User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Message newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Message newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Message query()
@@ -44,6 +49,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Message extends Model
 {
+    use HasFactory;
+
     /**
      * The Attributes That Are Mass Assignable.
      *
@@ -98,9 +105,24 @@ class Message extends Model
     }
 
     /**
+     * Set The Chat Message After Its Been Purified.
+     *
+     * @param string $value
+     *
+     * @return void
+     */
+    public function setMessageAttribute($value)
+    {
+        $antiXss = new AntiXSS();
+
+        $this->attributes['message'] = $antiXss->xss_clean($value);
+    }
+
+    /**
      * Parse Content And Return Valid HTML.
      *
      * @param $message
+     *
      * @return string Parsed BBCODE To HTML
      */
     public static function getMessageHtml($message)

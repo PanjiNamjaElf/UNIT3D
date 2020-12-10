@@ -11,8 +11,8 @@
         </a>
     </li>
     <li>
-        <a href="{{ route('poll', ['slug' => $poll->slug]) }}" itemprop="url" class="l-breadcrumb-item-link">
-            <span itemprop="title" class="l-breadcrumb-item-link-title">@lang('poll.poll')</span>
+        <a href="{{ route('poll', ['id' => $poll->id]) }}" itemprop="url" class="l-breadcrumb-item-link">
+            <span itemprop="title" class="l-breadcrumb-item-link-title">{{ $poll->title }}</span>
         </a>
     </li>
 @endsection
@@ -20,7 +20,8 @@
 @section('content')
     <div class="box container">
         <div class="page-title">
-            <h1>{{ $poll->title }}</h1></div>
+            <h1>{{ $poll->title }}</h1>
+        </div>
         <hr>
         <div class="forum-categories">
             <div class="forum-category">
@@ -29,9 +30,6 @@
                         @include('poll.forms.vote')
                         @if ($poll->multiple_choice)
                             <span class="badge-user text-bold text-red">@lang('poll.multiple-choice')</span>
-                        @endif
-                        @if ($poll->ip_checking)
-                            <span class="badge-user text-bold text-red">@lang('poll.ip-checking')</span>
                         @endif
                     </div>
                 </div>

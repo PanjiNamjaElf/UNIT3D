@@ -2,90 +2,72 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Controllers\Staff;
 
+use App\Http\Controllers\Controller;
+use App\Models\Comment;
+use App\Models\Follow;
+use App\Models\Group;
+use App\Models\Invite;
 use App\Models\Like;
+use App\Models\Message;
 use App\Models\Note;
 use App\Models\Peer;
 use App\Models\Post;
-use App\Models\User;
-use App\Models\Group;
+use App\Models\PrivateMessage;
 use App\Models\Thank;
 use App\Models\Topic;
-use App\Models\Follow;
-use App\Models\Invite;
-use App\Models\Comment;
-use App\Models\Message;
 use App\Models\Torrent;
+use App\Models\User;
 use Illuminate\Http\Request;
-use App\Models\PrivateMessage;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * @see \Tests\Todo\Feature\Http\Controllers\UserControllerTest
+ */
 class UserController extends Controller
 {
+    /**
+     * @var string[]
+     */
+    private const WEIGHTS = [
+        'is_modo',
+        'is_admin',
+    ];
+
     /**
      * Users List.
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function members()
+    public function index()
     {
-        $users = User::with('group')->latest()->paginate(25);
-        $uploaders = User::with('group')->where('group_id', '=', 7)->latest()->paginate(25);
-        $mods = User::with('group')->where('group_id', '=', 6)->latest()->paginate(25);
-        $admins = User::with('group')->where('group_id', '=', 4)->latest()->paginate(25);
-        $coders = User::with('group')->where('group_id', '=', 10)->latest()->paginate(25);
-
-        return view('Staff.user.user_search', [
-            'users'     => $users,
-            'uploaders' => $uploaders,
-            'mods'      => $mods,
-            'admins'    => $admins,
-            'coders'    => $coders,
-        ]);
-    }
-
-    /**
-     * Search For A User.
-     *
-     * @param  Request  $request
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
-    public function userSearch(Request $request)
-    {
-        $users = User::where([
-            ['username', 'like', '%'.$request->input('username').'%'],
-        ])->paginate(25);
-        $users->setPath('?username='.$request->input('username'));
-
-        return view('Staff.user.user_results', ['users' => $users]);
+        return \view('Staff.user.index');
     }
 
     /**
      * User Edit Form.
      *
-     * @param $username
-     * @param $id
+     * @param \App\Models\User $username
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function userSettings($username, $id)
+    public function settings($username)
     {
-        $user = User::findOrFail($id);
+        $user = User::where('username', '=', $username)->firstOrFail();
         $groups = Group::all();
-        $notes = Note::where('user_id', '=', $id)->latest()->paginate(25);
+        $notes = Note::where('user_id', '=', $user->id)->latest()->paginate(25);
 
-        return view('Staff.user.user_edit', [
+        return \view('Staff.user.edit', [
             'user'   => $user,
             'groups' => $groups,
             'notes'  => $notes,
@@ -96,26 +78,20 @@ class UserController extends Controller
      * Edit A User.
      *
      * @param \Illuminate\Http\Request $request
-     * @param $username
-     * @param $id
+     * @param \App\Models\User         $username
      *
-     * @@return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function userEdit(Request $request, $username, $id)
+    public function edit(Request $request, $username)
     {
-        $user = User::with('group')->findOrFail($id);
+        $user = User::with('group')->where('username', '=', $username)->firstOrFail();
         $staff = $request->user();
 
         $sendto = (int) $request->input('group_id');
 
-        $weights = [
-            'is_modo',
-            'is_admin',
-        ];
-
         $sender = -1;
         $target = -1;
-        foreach ($weights as $pos => $weight) {
+        foreach (self::WEIGHTS as $pos => $weight) {
             if ($user->group->$weight && $user->group->$weight == 1) {
                 $target = $pos;
             }
@@ -133,8 +109,8 @@ class UserController extends Controller
 
         // Hard coded until group change.
 
-        if ($target >= $sender || ($sender == 0 && ($sendto == 6 || $sendto == 4 || $sendto == 10)) || ($sender == 1 && ($sendto == 4 || $sendto == 10))) {
-            return redirect()->route('profile', ['username' => $user->username, 'id' => $user->id])
+        if ($target >= $sender || ($sender == 0 && ($sendto === 6 || $sendto === 4 || $sendto === 10)) || ($sender == 1 && ($sendto === 4 || $sendto === 10))) {
+            return \redirect()->route('users.show', ['username' => $user->username])
                 ->withErrors('You Are Not Authorized To Perform This Action!');
         }
 
@@ -147,10 +123,7 @@ class UserController extends Controller
         $user->group_id = (int) $request->input('group_id');
         $user->save();
 
-        // Activity Log
-        \LogActivity::addToLog("Staff Member {$staff->username} has edited {$user->username} account.");
-
-        return redirect()->route('profile', ['username' => $user->slug, 'id' => $user->id])
+        return \redirect()->route('users.show', ['username' => $user->username])
             ->withSuccess('Account Was Updated Successfully!');
     }
 
@@ -158,14 +131,13 @@ class UserController extends Controller
      * Edit A Users Permissions.
      *
      * @param \Illuminate\Http\Request $request
-     * @param $username
-     * @param $id
+     * @param \App\Models\User         $username
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function userPermissions(Request $request, $username, $id)
+    public function permissions(Request $request, $username)
     {
-        $user = User::findOrFail($id);
+        $user = User::where('username', '=', $username)->firstOrFail();
         $staff = $request->user();
 
         $user->can_upload = $request->input('can_upload');
@@ -176,10 +148,7 @@ class UserController extends Controller
         $user->can_chat = $request->input('can_chat');
         $user->save();
 
-        // Activity Log
-        \LogActivity::addToLog("Staff Member {$staff->username} has edited {$user->username} account permissions.");
-
-        return redirect()->route('profile', ['username' => $user->slug, 'id' => $user->id])
+        return \redirect()->route('users.show', ['username' => $user->username])
             ->withSuccess('Account Permissions Successfully Edited');
     }
 
@@ -187,41 +156,36 @@ class UserController extends Controller
      * Edit A Users Password.
      *
      * @param \Illuminate\Http\Request $request
-     * @param $username
-     * @param $id
+     * @param \App\Models\User         $username
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
-    protected function userPassword(Request $request, $username, $id)
+    protected function password(Request $request, $username)
     {
-        $user = User::findOrFail($id);
-        $staff = auth()->user();
+        $user = User::where('username', '=', $username)->firstOrFail();
+        $staff = \auth()->user();
 
         $new_password = $request->input('new_password');
         $user->password = Hash::make($new_password);
         $user->save();
 
-        // Activity Log
-        \LogActivity::addToLog("Staff Member {$staff->username} has changed {$user->username} password.");
-
-        return redirect()->route('profile', ['username' => $user->slug, 'id' => $user->id])
+        return \redirect()->route('users.show', ['username' => $user->username])
             ->withSuccess('Account Password Was Updated Successfully!');
     }
 
     /**
      * Delete A User.
      *
-     * @param $username
-     * @param $id
+     * @param \App\Models\User $username
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
-    protected function userDelete($username, $id)
+    protected function destroy($username)
     {
-        $user = User::findOrFail($id);
-        $staff = auth()->user();
+        $user = User::where('username', '=', $username)->firstOrFail();
+        $staff = \auth()->user();
 
-        abort_if($user->group->is_modo || auth()->user()->id == $user->id, 403);
+        \abort_if($user->group->is_modo || \auth()->user()->id == $user->id, 403);
 
         // Removes UserID from Torrents if any and replaces with System UserID (1)
         foreach (Torrent::withAnyStatus()->where('user_id', '=', $user->id)->get() as $tor) {
@@ -292,41 +256,13 @@ class UserController extends Controller
         foreach (Peer::where('user_id', '=', $user->id)->get() as $peer) {
             $peer->delete();
         }
-        // Activity Log
-        \LogActivity::addToLog("Staff Member {$staff->username} has deleted {$user->username} account.");
 
         if ($user->delete()) {
-            return redirect()->to('staff_dashboard')
+            return \redirect()->route('staff.dashboard.index')
                 ->withSuccess('Account Has Been Removed');
-        } else {
-            return redirect()->to('staff_dashboard')
-                ->withErrors('Something Went Wrong!');
-        }
-    }
-
-    /**
-     * Mass Validate Unvalidated Users.
-     *
-     * @return Illuminate\Http\RedirectResponse
-     */
-    public function massValidateUsers()
-    {
-        $validatingGroup = Group::select(['id'])->where('slug', '=', 'validating')->first();
-        $memberGroup = Group::select(['id'])->where('slug', '=', 'user')->first();
-        $users = User::where('active', '=', 0)->where('group_id', '=', $validatingGroup->id)->get();
-
-        foreach ($users as $user) {
-            $user->group_id = $memberGroup->id;
-            $user->active = 1;
-            $user->can_upload = 1;
-            $user->can_download = 1;
-            $user->can_request = 1;
-            $user->can_comment = 1;
-            $user->can_invite = 1;
-            $user->save();
         }
 
-        return redirect()->to('staff_dashboard')
-            ->withSuccess('Unvalidated Accounts Are Now Validated');
+        return \redirect()->route('staff.dashboard.index')
+            ->withErrors('Something Went Wrong!');
     }
 }

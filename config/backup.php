@@ -2,13 +2,13 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 return [
@@ -124,12 +124,12 @@ return [
     'notifications' => [
 
         'notifications' => [
-            \Spatie\Backup\Notifications\Notifications\BackupHasFailed::class => ['mail'],
+            \Spatie\Backup\Notifications\Notifications\BackupHasFailed::class         => ['mail'],
             \Spatie\Backup\Notifications\Notifications\UnhealthyBackupWasFound::class => ['mail'],
-            \Spatie\Backup\Notifications\Notifications\CleanupHasFailed::class => ['mail'],
-            \Spatie\Backup\Notifications\Notifications\BackupWasSuccessful::class => ['mail'],
-            \Spatie\Backup\Notifications\Notifications\HealthyBackupWasFound::class => ['mail'],
-            \Spatie\Backup\Notifications\Notifications\CleanupWasSuccessful::class => ['mail'],
+            \Spatie\Backup\Notifications\Notifications\CleanupHasFailed::class        => ['mail'],
+            \Spatie\Backup\Notifications\Notifications\BackupWasSuccessful::class     => ['mail'],
+            \Spatie\Backup\Notifications\Notifications\HealthyBackupWasFound::class   => ['mail'],
+            \Spatie\Backup\Notifications\Notifications\CleanupWasSuccessful::class    => ['mail'],
         ],
 
         /*
@@ -139,7 +139,7 @@ return [
         'notifiable' => \Spatie\Backup\Notifications\Notifiable::class,
 
         'mail' => [
-            'to' =>  env('DEFAULT_OWNER_EMAIL'),
+            'to' => env('DEFAULT_OWNER_EMAIL'),
         ],
 
         'slack' => [
@@ -164,10 +164,10 @@ return [
      */
     'monitor_backups' => [
         [
-            'name' => env('APP_NAME', 'UNIT3D'),
-            'disks' => ['backups'],
+            'name'          => env('APP_NAME', 'UNIT3D'),
+            'disks'         => ['backups'],
             'health_checks' => [
-                \Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays::class => 1,
+                \Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays::class          => 1,
                 \Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumStorageInMegabytes::class => 5000,
             ],
         ],
@@ -232,11 +232,11 @@ return [
     ],
 
     'security' => [
-        'password' => env('APP_KEY'),
-        'encryption' => \App\Helpers\BackupEncryption::ENCRYPTION_WINZIP_AES_256,
+        'password'   => env('APP_KEY'),
+        'encryption' => \App\Helpers\BackupEncryption::ENCRYPTION_DEFAULT,
 
         // Available encryption methods:
-        // \App\Helpers\BackupEncryption::ENCRYPTION_DEFAULT (PKWARE/ZipCrypto)
+        // \App\Helpers\BackupEncryption::ENCRYPTION_DEFAULT (PHP < 7.2: PKWARE/ZipCrypto, PHP >= 7.2: AES 128)
         // \App\Helpers\BackupEncryption::ENCRYPTION_WINZIP_AES_128 (AES 128)
         // \App\Helpers\BackupEncryption::ENCRYPTION_WINZIP_AES_192 (AES 192)
         // \App\Helpers\BackupEncryption::ENCRYPTION_WINZIP_AES_256 (AES 256)

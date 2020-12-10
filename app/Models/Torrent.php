@@ -2,77 +2,95 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Models;
 
 use App\Helpers\Bbcode;
+use App\Helpers\Linkify;
 use App\Helpers\MediaInfo;
 use App\Helpers\StringHelper;
-use App\Notifications\NewThank;
 use App\Notifications\NewComment;
+use App\Notifications\NewThank;
+use App\Traits\Auditable;
 use Hootlex\Moderation\Moderatable;
-use Kyslik\ColumnSortable\Sortable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Kyslik\ColumnSortable\Sortable;
+use voku\helper\AntiXSS;
 
 /**
- * Torrent model.
+ * App\Models\Torrent.
  *
- * @property int $id
- * @property string $name
- * @property string $slug
- * @property string $description
- * @property string|null $mediainfo
- * @property string $info_hash
- * @property string $file_name
- * @property int $num_file
- * @property float $size
- * @property string|null $nfo
- * @property int $leechers
- * @property int $seeders
- * @property int $times_completed
- * @property int|null $category_id
- * @property string $announce
- * @property int $user_id
- * @property string $imdb
- * @property string $tvdb
- * @property string $tmdb
- * @property string $mal
- * @property \App\Models\Type $type
- * @property int $stream
- * @property int $free
- * @property int $doubleup
- * @property int $highspeed
+ * @property int                                                                    $id
+ * @property string                                                                 $name
+ * @property string                                                                 $slug
+ * @property string                                                                 $description
+ * @property string|null                                                            $mediainfo
+ * @property string                                                                 $info_hash
+ * @property string                                                                 $file_name
+ * @property int                                                                    $num_file
+ * @property float                                                                  $size
+ * @property string|null                                                            $nfo
+ * @property int                                                                    $leechers
+ * @property int                                                                    $seeders
+ * @property int                                                                    $times_completed
+ * @property int|null                                                               $category_id
+ * @property string                                                                 $announce
+ * @property int                                                                    $user_id
+ * @property string                                                                 $imdb
+ * @property string                                                                 $tvdb
+ * @property string                                                                 $tmdb
+ * @property string                                                                 $mal
+ * @property string                                                                 $igdb
+ * @property int                                                                    $stream
+ * @property int                                                                    $free
+ * @property int                                                                    $doubleup
+ * @property int                                                                    $highspeed
  * @property \Illuminate\Database\Eloquent\Collection|\App\Models\FeaturedTorrent[] $featured
- * @property int $status
- * @property \Illuminate\Support\Carbon|null $moderated_at
- * @property int|null $moderated_by
- * @property int $anon
- * @property int $sticky
- * @property int $sd
- * @property int $internal
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property int                                                                    $status
+ * @property \Illuminate\Support\Carbon|null                                        $moderated_at
+ * @property int|null                                                               $moderated_by
+ * @property int                                                                    $anon
+ * @property int                                                                    $sticky
+ * @property int                                                                    $sd
+ * @property int                                                                    $internal
+ * @property \Illuminate\Support\Carbon|null                                        $created_at
+ * @property \Illuminate\Support\Carbon|null                                        $updated_at
+ * @property string|null                                                            $release_year
+ * @property int                                                                    $type_id
  * @property-read \App\Models\Category|null $category
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Comment[] $comments
+ * @property-read int|null $comments_count
+ * @property-read int|null $featured_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TorrentFile[] $files
+ * @property-read int|null $files_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\History[] $history
+ * @property-read int|null $history_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Warning[] $hitrun
+ * @property-read int|null $hitrun_count
  * @property-read \App\Models\User|null $moderated
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Peer[] $peers
- * @property-read \App\Models\TorrentRequest $request
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Tag[] $tags
+ * @property-read int|null $peers_count
+ * @property-read \App\Models\TorrentRequest|null $request
+ * @property-write mixed $media_info
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Subtitle[] $subtitles
+ * @property-read int|null $subtitles_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Thank[] $thanks
+ * @property-read int|null $thanks_count
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\BonTransactions[] $tips
+ * @property-read int|null $tips_count
+ * @property-read \App\Models\Type $type
  * @property-read \App\Models\User $uploader
  * @property-read \App\Models\User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent query()
@@ -88,6 +106,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereFree($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereHighspeed($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereIgdb($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereImdb($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereInfoHash($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereInternal($value)
@@ -99,6 +118,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereNfo($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereNumFile($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereReleaseYear($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereSd($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereSeeders($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereSize($value)
@@ -109,15 +129,17 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereTimesCompleted($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereTmdb($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereTvdb($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereTypeId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Torrent whereUserId($value)
  * @mixin \Eloquent
  */
 class Torrent extends Model
 {
+    use HasFactory;
     use Moderatable;
     use Sortable;
+    use Auditable;
 
     /**
      * The Columns That Are Sortable.
@@ -183,6 +205,26 @@ class Torrent extends Model
     }
 
     /**
+     * Belongs To A Resolution.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function resolution()
+    {
+        return $this->belongsTo(Resolution::class);
+    }
+
+    /**
+     * Has Many Genres.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function genres()
+    {
+        return $this->belongsToMany(Genre::class, 'genre_torrent', 'torrent_id', 'genre_id', 'id', 'id');
+    }
+
+    /**
      * Torrent Has Been Moderated By.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -196,13 +238,13 @@ class Torrent extends Model
     }
 
     /**
-     * Has Many Tags.
+     * Has Many Keywords.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function tags()
+    public function keywords()
     {
-        return $this->belongsToMany(Tag::class, 'tag_torrent', 'torrent_id', 'tag_name', 'id', 'name');
+        return $this->hasMany(Keyword::class);
     }
 
     /**
@@ -286,6 +328,16 @@ class Torrent extends Model
     }
 
     /**
+     * Has Many Subtitles.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function subtitles()
+    {
+        return $this->hasMany(Subtitle::class);
+    }
+
+    /**
      * Relationship To A Single Request.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
@@ -296,6 +348,20 @@ class Torrent extends Model
     }
 
     /**
+     * Set The Torrents Description After Its Been Purified.
+     *
+     * @param string $value
+     *
+     * @return void
+     */
+    public function setDescriptionAttribute($value)
+    {
+        $antiXss = new AntiXSS();
+
+        $this->attributes['description'] = $antiXss->xss_clean($value);
+    }
+
+    /**
      * Parse Description And Return Valid HTML.
      *
      * @return string Parsed BBCODE To HTML
@@ -303,8 +369,21 @@ class Torrent extends Model
     public function getDescriptionHtml()
     {
         $bbcode = new Bbcode();
+        $linkify = new Linkify();
 
-        return $bbcode->parse($this->description, true);
+        return $bbcode->parse($linkify->linky($this->description), true);
+    }
+
+    /**
+     * Set The Torrents MediaInfo After Its Been Purified.
+     *
+     * @param string $value
+     *
+     * @return void
+     */
+    public function setMediaInfoAttribute($value)
+    {
+        $this->attributes['mediainfo'] = $value;
     }
 
     /**
@@ -314,17 +393,17 @@ class Torrent extends Model
      */
     public function getMediaInfo()
     {
-        $parser = new MediaInfo();
-        $parsed = $parser->parse($this->mediaInfo);
+        $mediaInfo = new MediaInfo();
 
-        return $parsed;
+        return $mediaInfo->parse($this->mediaInfo);
     }
 
     /**
      * Returns The Size In Human Format.
      *
-     * @param  null  $bytes
-     * @param  int  $precision
+     * @param null $bytes
+     * @param int  $precision
+     *
      * @return string
      */
     public function getSize($bytes = null, $precision = 2)
@@ -339,9 +418,9 @@ class Torrent extends Model
      */
     public function bookmarked()
     {
-        return Bookmark::where('user_id', '=', auth()->user()->id)
+        return (bool) Bookmark::where('user_id', '=', \auth()->user()->id)
             ->where('torrent_id', '=', $this->id)
-            ->first() ? true : false;
+            ->first();
     }
 
     /**
@@ -349,13 +428,14 @@ class Torrent extends Model
      *
      * @param $type
      * @param $payload
+     *
      * @return bool
      */
     public function notifyUploader($type, $payload)
     {
         if ($type == 'thank') {
             $user = User::with('notification')->findOrFail($this->user_id);
-            if ($user->acceptsNotification(auth()->user(), $user, 'torrent', 'show_torrent_thank')) {
+            if ($user->acceptsNotification(\auth()->user(), $user, 'torrent', 'show_torrent_thank')) {
                 $user->notify(new NewThank('torrent', $payload));
 
                 return true;
@@ -364,7 +444,7 @@ class Torrent extends Model
             return true;
         }
         $user = User::with('notification')->findOrFail($this->user_id);
-        if ($user->acceptsNotification(auth()->user(), $user, 'torrent', 'show_torrent_comment')) {
+        if ($user->acceptsNotification(\auth()->user(), $user, 'torrent', 'show_torrent_comment')) {
             $user->notify(new NewComment('torrent', $payload));
 
             return true;
@@ -375,13 +455,15 @@ class Torrent extends Model
 
     /**
      * Torrent Is Freeleech.
-     * @param  null  $user
+     *
+     * @param null $user
+     *
      * @return bool
      */
     public function isFreeleech($user = null)
     {
         $pfree = $user ? $user->group->is_freeleech || PersonalFreeleech::where('user_id', '=', $user->id)->first() : false;
 
-        return $this->free || config('other.freeleech') || $pfree;
+        return $this->free || \config('other.freeleech') || $pfree;
     }
 }

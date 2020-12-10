@@ -2,107 +2,105 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Controllers\Staff;
 
-use App\Models\Peer;
-use App\Models\User;
-use App\Models\Group;
-use App\Models\Report;
-use App\Models\Seedbox;
-use App\Models\Torrent;
-use App\Models\Application;
-use Illuminate\Http\Request;
 use App\Helpers\SystemInformation;
 use App\Http\Controllers\Controller;
+use App\Models\Group;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Spatie\SslCertificate\SslCertificate;
 
+/**
+ * @see \Tests\Todo\Feature\Http\Controllers\Staff\HomeControllerTest
+ */
 class HomeController extends Controller
 {
     /**
-     * Staff Dashboard Index.
+     * Display Staff Dashboard.
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @throws \Exception
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function home(Request $request)
+    public function index(Request $request)
     {
         // User Info
-        $bannedGroup = Group::select(['id'])->where('slug', '=', 'banned')->first();
-        $validatingGroup = Group::select(['id'])->where('slug', '=', 'validating')->first();
-
-        $num_user = User::count();
-        $banned = User::where('group_id', '=', $bannedGroup->id)->count();
-        $validating = User::where('group_id', '=', $validatingGroup->id)->count();
+        $banned_group = \cache()->rememberForever('banned_group', fn () => Group::where('slug', '=', 'banned')->pluck('id'));
+        $validating_group = \cache()->rememberForever('validating_group', fn () => Group::where('slug', '=', 'validating')->pluck('id'));
+        $users = DB::table('users')
+            ->selectRaw('count(*) as total')
+            ->selectRaw("count(case when group_id = $banned_group[0] then 1 end) as banned")
+            ->selectRaw("count(case when group_id = $validating_group[0] then 1 end) as validating")
+            ->first();
 
         // Torrent Info
-        $num_torrent = Torrent::count();
-        $pending = Torrent::pending()->count();
-        $rejected = Torrent::rejected()->count();
+        $torrents = DB::table('torrents')
+            ->selectRaw('count(*) as total')
+            ->selectRaw('count(case when status = 0 then 1 end) as pending')
+            ->selectRaw('count(case when status = 2 then 1 end) as rejected')
+            ->selectRaw('count(case when status = 3 then 1 end) as postponed')
+            ->first();
 
         // Peers Info
-        $peers = Peer::count();
-        $seeders = Peer::where('seeder', '=', 1)->count();
-        $leechers = Peer::where('seeder', '=', 0)->count();
+        $peers = DB::table('peers')
+            ->selectRaw('count(*) as total')
+            ->selectRaw('count(case when seeder = 0 then 1 end) as leechers')
+            ->selectRaw('count(case when seeder = 1 then 1 end) as seeders')
+            ->first();
 
-        // Seedbox Info
-        $seedboxes = Seedbox::count();
-        $highspeed_users = Seedbox::count();
-        $highspeed_torrents = Torrent::where('highspeed', '=', 1)->count();
+        // Reports Info
+        $reports = DB::table('reports')
+            ->selectRaw('count(case when solved = 0 then 1 end) as unsolved')
+            ->first();
 
-        // User Info
-        $reports = Report::count();
-        $unsolved = Report::where('solved', '=', 0)->count();
-        $solved = Report::where('solved', '=', 1)->count();
+        // Pending Applications Count
+        $apps = DB::table('applications')
+            ->selectRaw('count(case when status = 0 then 1 end) as pending')
+            ->first();
 
         // SSL Info
         try {
-            $certificate = $request->secure() ? SslCertificate::createForHostName(config('app.url')) : '';
+            $certificate = $request->secure() ? SslCertificate::createForHostName(\config('app.url')) : '';
         } catch (\Exception $e) {
             $certificate = '';
         }
 
         // System Information
-        $sys = new SystemInformation();
-        $uptime = $sys->uptime();
-        $ram = $sys->memory();
-        $disk = $sys->disk();
-        $avg = $sys->avg();
-        $basic = $sys->basic();
+        $systemInformation = new SystemInformation();
+        $uptime = $systemInformation->uptime();
+        $ram = $systemInformation->memory();
+        $disk = $systemInformation->disk();
+        $avg = $systemInformation->avg();
+        $basic = $systemInformation->basic();
 
-        // Pending Applications Count
-        $app_count = Application::pending()->count();
+        // Directory Permissions
+        $file_permissions = $systemInformation->directoryPermissions();
 
-        return view('Staff.home.index', [
-            'num_user'           => $num_user,
-            'banned'             => $banned,
-            'validating'         => $validating,
-            'num_torrent'        => $num_torrent,
-            'pending'            => $pending,
-            'rejected'           => $rejected,
+        return \view('Staff.dashboard.index', [
+            'users'              => $users,
+            'torrents'           => $torrents,
             'peers'              => $peers,
-            'seeders'            => $seeders,
-            'leechers'           => $leechers,
-            'seedboxes'          => $seedboxes,
-            'highspeed_users'    => $highspeed_users,
-            'highspeed_torrents' => $highspeed_torrents,
             'reports'            => $reports,
-            'unsolved'           => $unsolved,
-            'solved'             => $solved,
+            'apps'               => $apps,
             'certificate'        => $certificate,
             'uptime'             => $uptime,
             'ram'                => $ram,
             'disk'               => $disk,
             'avg'                => $avg,
             'basic'              => $basic,
-            'app_count'          => $app_count,
+            'file_permissions'   => $file_permissions,
         ]);
     }
 }

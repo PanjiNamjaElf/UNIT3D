@@ -2,21 +2,21 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie, singularity43
  */
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
 use App\Models\TorrentRequest;
-use Illuminate\Notifications\Notification;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Notification;
 
 class NewRequestBounty extends Notification implements ShouldQueue
 {
@@ -33,16 +33,16 @@ class NewRequestBounty extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      *
-     * @param  string  $type
-     * @param  string  $sender
-     * @param $amount
-     * @param  TorrentRequest  $tr
+     * @param string                     $type
+     * @param string                     $sender
+     * @param                            $amount
+     * @param \App\Models\TorrentRequest $torrentRequest
      */
-    public function __construct(string $type, string $sender, $amount, TorrentRequest $tr)
+    public function __construct(string $type, string $sender, $amount, TorrentRequest $torrentRequest)
     {
         $this->type = $type;
         $this->sender = $sender;
-        $this->tr = $tr;
+        $this->tr = $torrentRequest;
         $this->amount = $amount;
     }
 
@@ -67,12 +67,12 @@ class NewRequestBounty extends Notification implements ShouldQueue
      */
     public function toArray($notifiable)
     {
-        $appurl = config('app.url');
+        $appurl = \config('app.url');
 
         return [
             'title' => $this->sender.' Has Added A Bounty Of '.$this->amount.' To A Requested Torrent',
             'body'  => $this->sender.' has added a bounty to one of your Requested Torrents '.$this->tr->name,
-            'url'   => "/request/{$this->tr->id}",
+            'url'   => \sprintf('/requests/%s', $this->tr->id),
         ];
     }
 }

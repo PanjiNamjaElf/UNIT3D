@@ -191,7 +191,7 @@ select option {
 }
 
 .form-control {
-    background-color: rgba(255, 255, 255, 0.16);
+    background-color: #2b2b2b;
     color: #fff;
     border: 2px solid rgba(0, 0, 0, 0.56);
 }
@@ -222,7 +222,7 @@ select option {
 }
 
 .text-info,
-.disk-good {
+.footer-icon {
     color: var(--color-400);
 }
 
@@ -242,11 +242,14 @@ a.text-bright:hover {
 
 .text-purple,
 .text-orange,
-.text-danger,
 .text-success,
 .text-pink,
 .fa-coins {
     color: var(--color-400);
+}
+
+.text-danger {
+    color: #996666;
 }
 
 .alert-danger,
@@ -339,16 +342,4 @@ div.header.red div.inner_content,
 }
 .table > tbody > tr > td.text-red {
     color: var(--color-light-red) !important;
-}
-
-.modal-underline {
-    border-bottom: 1px solid #333333;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-}
-
-.modal-overline {
-    border-top: 1px solid #333333;
-    padding-top: 10px;
-    margin-top: 10px;
 }

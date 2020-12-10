@@ -2,18 +2,17 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Event;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -33,7 +32,7 @@ class EventServiceProvider extends ServiceProvider
         'Illuminate\Auth\Events\Failed' => [
             \App\Listeners\FailedLoginListener::class,
         ],
-        'Gstt\Achievements\Event\Unlocked' => [
+        'Assada\Achievements\Event\Unlocked' => [
             \App\Listeners\AchievementUnlocked::class,
         ],
         'Spatie\Backup\Events\BackupZipWasCreated' => [
@@ -48,7 +47,6 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        parent::boot();
 
         //
     }

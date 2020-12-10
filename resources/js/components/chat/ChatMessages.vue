@@ -10,7 +10,7 @@
                             message.user.title ? ' (' + message.user.title + ')' : '\'s Profile'
                         }`
                     "
-                    :href="`/${message.user.username}.${message.user.id}`"
+                    :href="`/users/${message.user.username}`"
                 >
                     <img
                         v-if="message.user.id !== 1"
@@ -23,7 +23,7 @@
 
                 <h4 class="list-group-item-heading bot">
 
-                    <span class="badge-user text-bold">
+                    <span class="badge-user text-bold" :style="userStyles(message.user)">
 
                         <i v-if="(message.user && message.user.id > 1) || (message.bot && message.bot.id >= 1)" v-tooltip="message.user.group.name"
                            :class="message.user.group.icon">
@@ -34,12 +34,12 @@
 
                         <a v-if="message.user && message.user.id > 1" v-tooltip="message.user && message.user.id > 1 && message.user.id !== $parent.auth.id ? `Private Message` : message.user.username"
                            @click="pmUser(message.user)"
-                           :style="userStyles(message.user)">
+                           :style="groupColor(message.user)">
 					        {{message.user.username}}
                         </a>
 
-                        <a v-if="message.bot && message.bot.id >= 1 && (!message.user || message.user.id < 2)" v-tooltip="message.bot && message.bot.id > 0 ? message.bot.name : message.bot.name"
-                           :style="userStyles(message.user)">
+                        <a v-if="message.bot && message.bot.id >= 1 && (!message.user || message.user.id < 2)" v-tooltip="message.bot.name"
+                           :style="groupColor(message.user)">
 					        {{message.bot.name}}
                         </a>
 
@@ -67,7 +67,7 @@
                         <i class="fas fa-gift pointee"></i>
                     </a>
                     <span v-if="message.user.id !== 1" class="text-muted">
-                        {{ message.created_at | fromNow }}
+                        {{ message.created_at | diffForHumans }}
                     </span>
 
                 </h4>
@@ -88,7 +88,8 @@
     }
 </style>
 <script>
-  import moment from 'moment'
+  import dayjs from 'dayjs';
+  import relativeTime from 'dayjs/plugin/relativeTime';
   import pmMethods from './mixins/pmMethods'
 
   export default {
@@ -108,8 +109,8 @@
             if(e.target.hasAttribute('trigger') && e.target.getAttribute('trigger') == 'bot') {
                 e.preventDefault();
                 let target = e.target.hash;
-                var tmp = target.split('/');
-                $('#chat-message').bbcode('/'+tmp[1]+' '+tmp[2]+' ');
+              const tmp = target.split('/')
+              $('#chat-message').bbcode('/'+tmp[1]+' '+tmp[2]+' ');
                 $('#chat-message').htmlcode('/'+tmp[1]+' '+tmp[2]+' ');
             }
         },
@@ -144,18 +145,27 @@
         },
         userStyles (user) {
             return `cursor: pointer; color: ${user.group.color}; background-image: ${user.group.effect};`
+        },
+        groupColor (user) {
+            return user && user.group && user.group.hasOwnProperty('color') ? `color: ${user.group.color};` : `cursor: pointer;`
         }
     },
-      filters: {
-          fromNow (dt) {
-              return moment(String(dt)).fromNow()
-          }
-      },
-      created () {
-          this.interval = setInterval(() => this.$forceUpdate(), 30000)
-      },
-      beforeDestroy () {
-          clearInterval(this.interval)
+    created () {
+      dayjs.extend(relativeTime)
+      this.interval = setInterval(() => this.$forceUpdate(), 30000)
+    },
+
+    filters: {
+      diffForHumans: (date) => {
+        if (!date){
+          return null;
+        }
+
+        return dayjs(date).fromNow();
       }
+    },
+    beforeDestroy () {
+      clearInterval(this.interval)
+    }
   }
 </script>

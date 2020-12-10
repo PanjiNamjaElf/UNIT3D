@@ -2,44 +2,47 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Controllers;
 
 use App\Models\Article;
 
+/**
+ * @see \Tests\Feature\Http\Controllers\ArticleControllerTest
+ */
 class ArticleController extends Controller
 {
     /**
-     * Show All Articles.
+     * Display All Articles.
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function articles()
+    public function index()
     {
         $articles = Article::latest()->paginate(6);
 
-        return view('article.articles', ['articles' => $articles]);
+        return \view('article.index', ['articles' => $articles]);
     }
 
     /**
      * Show A Article.
      *
-     * @param $slug
-     * @param $id
+     * @param \App\Models\Article $id
+     *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function post($slug, $id)
+    public function show($id)
     {
         $article = Article::with(['user', 'comments'])->findOrFail($id);
 
-        return view('article.article', ['article' => $article]);
+        return \view('article.show', ['article' => $article]);
     }
 }

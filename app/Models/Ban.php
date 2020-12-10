@@ -2,30 +2,35 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Models;
 
+use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property int $id
- * @property int $owned_by
- * @property int|null $created_by
- * @property string|null $ban_reason
- * @property string|null $unban_reason
- * @property string|null $removed_at
+ * App\Models\Ban.
+ *
+ * @property int                             $id
+ * @property int                             $owned_by
+ * @property int|null                        $created_by
+ * @property string|null                     $ban_reason
+ * @property string|null                     $unban_reason
+ * @property string|null                     $removed_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\User $banneduser
  * @property-read \App\Models\User|null $staffuser
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Ban newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Ban newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Ban query()
@@ -41,6 +46,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Ban extends Model
 {
+    use HasFactory;
+    use Auditable;
+
     /**
      * Belongs To A User.
      *

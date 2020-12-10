@@ -2,43 +2,31 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Controllers;
 
-use Image;
-use Carbon\Carbon;
 use App\Models\Album;
-use Illuminate\Support\Str;
+use App\Models\Movie;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Services\Clients\OmdbClient;
+use Illuminate\Support\Str;
+use Intervention\Image\Facades\Image;
 
+/**
+ * @see \Tests\Feature\Http\Controllers\AlbumControllerTest
+ */
 class AlbumController extends Controller
 {
     /**
-     * @var OmdbClient
-     */
-    private $client;
-
-    /**
-     * AlbumController Constructor.
-     *
-     * @param OmdbClient $client
-     */
-    public function __construct(OmdbClient $client)
-    {
-        $this->client = $client;
-    }
-
-    /**
-     * Get All Albums.
+     * Display All Albums.
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
@@ -46,64 +34,49 @@ class AlbumController extends Controller
     {
         $albums = Album::withCount('images')->get();
 
-        return view('gallery.index')->with('albums', $albums);
+        return \view('album.index')->with('albums', $albums);
     }
 
     /**
-     * Get A Album.
-     *
-     * @param $id
+     * Show Album Create Form.
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function getAlbum($id)
+    public function create()
     {
-        $album = Album::with('images')->find($id);
-        $albums = Album::with('images')->get();
-
-        return view('gallery.album', ['album' => $album, 'albums' => $albums]);
+        return \view('album.create');
     }
 
     /**
-     * Album Add Form.
-     *
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
-    public function addForm()
-    {
-        return view('gallery.createalbum');
-    }
-
-    /**
-     * Add A Album.
+     * Store A New Album.
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function add(Request $request)
+    public function store(Request $request)
     {
         $imdb = Str::startsWith($request->input('imdb'), 'tt') ? $request->input('imdb') : 'tt'.$request->input('imdb');
-        $omdb = $this->client->find(['imdb' => $imdb]);
+        $meta = Movie::where('imdb_id', '=', $imdb)->first();
 
-        if ($omdb === null || $omdb === false) {
-            return redirect()->route('create_album_form')
-                ->withErrors('Bad IMDB Request!');
+        if ($meta === null || ! $meta) {
+            return \redirect()->route('albums.create')
+                ->withErrors('Meta Data Not Found. Gallery System Is Being Refactored');
         }
 
         $album = new Album();
         $album->user_id = $request->user()->id;
-        $album->name = $omdb['Title'].' ('.$omdb['Year'].')';
+        $album->name = $meta->title.' ('.$meta->release_date.')';
         $album->description = $request->input('description');
         $album->imdb = $request->input('imdb');
 
         $image = $request->file('cover_image');
-        $filename = 'album-cover_'.uniqid().'.'.$image->getClientOriginalExtension();
-        $path = public_path('/files/img/'.$filename);
+        $filename = 'album-cover_'.\uniqid('', true).'.'.$image->getClientOriginalExtension();
+        $path = \public_path('/files/img/'.$filename);
         Image::make($image->getRealPath())->fit(400, 225)->encode('png', 100)->save($path);
         $album->cover_image = $filename;
 
-        $v = validator($album->toArray(), [
+        $v = \validator($album->toArray(), [
             'user_id'     => 'required',
             'name'        => 'required',
             'description' => 'required',
@@ -112,33 +85,50 @@ class AlbumController extends Controller
         ]);
 
         if ($v->fails()) {
-            return redirect()->route('create_album_form')
+            return \redirect()->route('albums.create')
                 ->withInput()
                 ->withErrors($v->errors());
-        } else {
-            $album->save();
-
-            return redirect()->route('show_album', ['id' => $album->id])
-                ->withSuccess('Your album has successfully published!');
         }
+        $album->save();
+
+        return \redirect()->route('albums.show', ['id' => $album->id])
+            ->withSuccess('Your album has successfully published!');
+    }
+
+    /**
+     * Show A Album.
+     *
+     * @param \App\Models\Album $id
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function show($id)
+    {
+        $album = Album::with('images')->find($id);
+        $albums = Album::with('images')->get();
+
+        return \view('album.show', ['album' => $album, 'albums' => $albums]);
     }
 
     /**
      * Delete A Album.
      *
-     * @param $id
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\Album        $id
      *
-     * @return Illuminate\Http\RedirectResponse
+     * @throws \Exception
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(Request $request, $id)
     {
         $user = $request->user();
         $album = Album::findOrFail($id);
 
-        abort_unless($user->group->is_modo || $user->id === $album->user_id && Carbon::now()->lt($album->created_at->addDay()), 403);
+        \abort_unless($user->group->is_modo || ($user->id === $album->user_id && Carbon::now()->lt($album->created_at->addDay())), 403);
         $album->delete();
 
-        return redirect()->route('home')
+        return \redirect()->route('albums.index')
             ->withSuccess('Album has successfully been deleted');
     }
 }

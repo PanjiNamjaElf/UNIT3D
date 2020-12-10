@@ -1,20 +1,29 @@
 <?php
+/**
+ * NOTICE OF LICENSE.
+ *
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
+ * The details is bundled with this project in the file LICENSE.txt.
+ *
+ * @project    UNIT3D Community Edition
+ *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
+ * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
+ */
 
 return [
-  'add-option' => 'اضافه کردن گزینه',
-  'create-poll' => 'ایجاد نظرسنجی',
-  'current' => 'نظرسنجی فعلی',
-  'delete-option' => 'گزینه را حذف کنید',
-  'ip-checking' => 'این نظرسنجی دارای رأی گیری تکراری است. شما فقط می توانید یک بار رأی دهید',
-  'ip-checking-warrning' => 'فقط اگر سایت در حالت عمومی مورد نیاز باشد',
-  'multiple-choice' => 'این نظرسنجی چند گزینه ای است. به عنوان بسیاری از پاسخ را انتخاب کنید که دوست دارید.',
-  'option' => 'گزینه',
-  'poll' => 'نظرسنجی',
-  'polls' => 'نظرسنجی ها',
-  'results' => 'نتایج نظرسنجی',
-  'title' => 'عنوان',
-  'total' => 'مجموع آراء همیشه',
-  'vote' => 'رای',
-  'vote-now' => 'رای خود را در حال حاضر دریافت کنید',
-  'votes' => 'رای',
+    'add-option'      => 'اضافه کردن گزینه',
+    'create-poll'     => 'ایجاد نظرسنجی',
+    'current'         => 'نظرسنجی فعلی',
+    'delete-option'   => 'گزینه را حذف کنید',
+    'multiple-choice' => 'این نظرسنجی چند گزینه ای است. به عنوان بسیاری از پاسخ را انتخاب کنید که دوست دارید.',
+    'option'          => 'گزینه',
+    'poll'            => 'نظرسنجی',
+    'polls'           => 'نظرسنجی ها',
+    'results'         => 'نتایج نظرسنجی',
+    'title'           => 'عنوان',
+    'total'           => 'مجموع آراء همیشه',
+    'vote'            => 'رای',
+    'vote-now'        => 'رای خود را در حال حاضر دریافت کنید',
+    'votes'           => 'رای',
 ];

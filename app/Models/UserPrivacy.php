@@ -2,50 +2,54 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     singularity43
  */
 
 namespace App\Models;
 
+use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property int $id
- * @property int $user_id
- * @property int $show_achievement
- * @property int $show_bon
- * @property int $show_comment
- * @property int $show_download
- * @property int $show_follower
- * @property int $show_online
- * @property int $show_peer
- * @property int $show_post
- * @property int $show_profile
- * @property int $show_profile_about
- * @property int $show_profile_achievement
- * @property int $show_profile_badge
- * @property int $show_profile_follower
- * @property int $show_profile_title
- * @property int $show_profile_bon_extra
- * @property int $show_profile_comment_extra
- * @property int $show_profile_forum_extra
- * @property int $show_profile_request_extra
- * @property int $show_profile_torrent_count
- * @property int $show_profile_torrent_extra
- * @property int $show_profile_torrent_ratio
- * @property int $show_profile_torrent_seed
- * @property int $show_profile_warning
- * @property int $show_rank
- * @property int $show_requested
- * @property int $show_topic
- * @property int $show_upload
- * @property int $show_wishlist
+ * App\Models\UserPrivacy.
+ *
+ * @property int   $id
+ * @property int   $user_id
+ * @property int   $show_achievement
+ * @property int   $show_bon
+ * @property int   $show_comment
+ * @property int   $show_download
+ * @property int   $show_follower
+ * @property int   $show_online
+ * @property int   $show_peer
+ * @property int   $show_post
+ * @property int   $show_profile
+ * @property int   $show_profile_about
+ * @property int   $show_profile_achievement
+ * @property int   $show_profile_badge
+ * @property int   $show_profile_follower
+ * @property int   $show_profile_title
+ * @property int   $show_profile_bon_extra
+ * @property int   $show_profile_comment_extra
+ * @property int   $show_profile_forum_extra
+ * @property int   $show_profile_request_extra
+ * @property int   $show_profile_torrent_count
+ * @property int   $show_profile_torrent_extra
+ * @property int   $show_profile_torrent_ratio
+ * @property int   $show_profile_torrent_seed
+ * @property int   $show_profile_warning
+ * @property int   $show_rank
+ * @property int   $show_requested
+ * @property int   $show_topic
+ * @property int   $show_upload
+ * @property int   $show_wishlist
  * @property array $json_profile_groups
  * @property array $json_torrent_groups
  * @property array $json_forum_groups
@@ -60,6 +64,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read array $expected_fields
  * @property-read array $expected_groups
  * @property-read \App\Models\User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\UserPrivacy newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\UserPrivacy newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\UserPrivacy query()
@@ -108,6 +113,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class UserPrivacy extends Model
 {
+    use HasFactory;
+    use Auditable;
+
     /**
      * Indicates If The Model Should Be Timestamped.
      *
@@ -128,17 +136,17 @@ class UserPrivacy extends Model
      * @var array
      */
     protected $casts = [
-        'json_profile_groups' => 'array',
-        'json_torrent_groups' => 'array',
-        'json_forum_groups' => 'array',
-        'json_bon_groups' => 'array',
-        'json_comment_groups' => 'array',
-        'json_wishlist_groups' => 'array',
-        'json_follower_groups' => 'array',
+        'json_profile_groups'     => 'array',
+        'json_torrent_groups'     => 'array',
+        'json_forum_groups'       => 'array',
+        'json_bon_groups'         => 'array',
+        'json_comment_groups'     => 'array',
+        'json_wishlist_groups'    => 'array',
+        'json_follower_groups'    => 'array',
         'json_achievement_groups' => 'array',
-        'json_rank_groups' => 'array',
-        'json_request_groups' => 'array',
-        'json_other_groups' => 'array',
+        'json_rank_groups'        => 'array',
+        'json_request_groups'     => 'array',
+        'json_other_groups'       => 'array',
     ];
 
     /**
@@ -161,9 +169,7 @@ class UserPrivacy extends Model
      */
     public function getExpectedGroupsAttribute()
     {
-        $expected_groups = ['default_groups' => ['1' => 0]];
-
-        return $expected_groups;
+        return ['default_groups' => ['1' => 0]];
     }
 
     /**
@@ -173,15 +179,14 @@ class UserPrivacy extends Model
      */
     public function getExpectedFieldsAttribute()
     {
-        $expected_fields = [];
-
-        return $expected_fields;
+        return [];
     }
 
     /**
      * Set the base vars on object creation without touching boot.
      *
-     * @param  string  $type
+     * @param string $type
+     *
      * @return void
      */
     public function setDefaultValues($type = 'default')

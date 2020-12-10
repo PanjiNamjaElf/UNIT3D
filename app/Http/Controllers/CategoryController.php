@@ -2,56 +2,62 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Controllers;
 
-use App\Models\Torrent;
+use App\Models\Bookmark;
 use App\Models\Category;
-use Illuminate\Http\Request;
 use App\Models\PersonalFreeleech;
+use App\Models\Torrent;
+use Illuminate\Http\Request;
 
+/**
+ * @see \Tests\Feature\Http\Controllers\CategoryControllerTest
+ */
 class CategoryController extends Controller
 {
     /**
-     * Show Categories.
+     * Display All Categories.
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function categories()
+    public function index()
     {
         $categories = Category::withCount('torrents')->get()->sortBy('position');
 
-        return view('category.categories', ['categories' => $categories]);
+        return \view('category.index', ['categories' => $categories]);
     }
 
     /**
-     * Show All Torrents Within A Category.
+     * Show A Category.
      *
-     * @param $slug
-     * @param $id
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\Category     $id
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function category(Request $request, $slug, $id)
+    public function show(Request $request, $id)
     {
         $user = $request->user();
-        $category = Category::select(['id', 'name', 'slug'])->findOrFail($id);
-        $torrents = Torrent::with(['user', 'category'])->withCount(['thanks', 'comments'])->where('category_id', '=', $id)->orderBy('sticky', 'desc')->latest()->paginate(25);
+        $category = Category::select(['id', 'name'])->findOrFail($id);
+        $torrents = Torrent::with(['user', 'category', 'type'])->withCount(['thanks', 'comments'])->where('category_id', '=', $id)->orderBy('sticky', 'desc')->latest()->paginate(25);
         $personal_freeleech = PersonalFreeleech::where('user_id', '=', $user->id)->first();
+        $bookmarks = Bookmark::where('user_id', $user->id)->get();
 
-        return view('category.category', [
+        return \view('category.show', [
             'torrents'           => $torrents,
             'user'               => $user,
             'category'           => $category,
             'personal_freeleech' => $personal_freeleech,
+            'bookmarks'          => $bookmarks,
         ]);
     }
 }

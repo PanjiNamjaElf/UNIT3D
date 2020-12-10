@@ -1,17 +1,14 @@
 <?php
-
-use Illuminate\Support\Str;
-
-/*
+/**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 if (! function_exists('appurl')) {
     function appurl()
@@ -21,47 +18,64 @@ if (! function_exists('appurl')) {
 }
 
 if (! function_exists('hrefProfile')) {
-    function hrefProfile($user)
+    function href_profile($user)
     {
         $appurl = appurl();
 
-        return "{$appurl}/{$user->username}.{$user->id}";
+        return sprintf('%s/users/%s', $appurl, $user->username);
     }
 }
 
 if (! function_exists('hrefArticle')) {
-    function hrefArticle($article)
+    function href_article($article)
     {
         $appurl = appurl();
 
-        return "{$appurl}/articles/{$article->slug}.{$article->id}";
+        return sprintf('%s/articles/%s', $appurl, $article->id);
     }
 }
 
 if (! function_exists('hrefTorrent')) {
-    function hrefTorrent($torrent)
+    function href_torrent($torrent)
     {
         $appurl = appurl();
 
-        return "{$appurl}/torrents/{$torrent->slug}.{$torrent->id}";
+        return sprintf('%s/torrents/%s', $appurl, $torrent->id);
     }
 }
 
 if (! function_exists('hrefRequest')) {
-    function hrefRequest($torrentRequest)
+    function href_request($torrentRequest)
     {
         $appurl = appurl();
-        $slug = Str::slug($torrentRequest->name);
 
-        return "{$appurl}/request/{$torrentRequest->id}";
+        return sprintf('%s/requests/%s', $appurl, $torrentRequest->id);
     }
 }
 
 if (! function_exists('hrefPoll')) {
-    function hrefPoll($poll)
+    function href_poll($poll)
     {
         $appurl = appurl();
 
-        return "{$appurl}/poll/{$poll->slug}";
+        return sprintf('%s/polls/%s', $appurl, $poll->id);
+    }
+}
+
+if (! function_exists('hrefPlaylist')) {
+    function href_playlist($playlist)
+    {
+        $appurl = appurl();
+
+        return sprintf('%s/playlists/%s', $appurl, $playlist->id);
+    }
+}
+
+if (! function_exists('hrefCollection')) {
+    function href_collection($collection)
+    {
+        $appurl = appurl();
+
+        return sprintf('%s/mediahub/collections/%s', $appurl, $collection->id);
     }
 }

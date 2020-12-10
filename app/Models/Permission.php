@@ -2,20 +2,24 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Models;
 
+use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
+ * App\Models\Permission.
+ *
  * @property int $id
  * @property int $forum_id
  * @property int $group_id
@@ -25,6 +29,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $start_topic
  * @property-read \App\Models\Forum $forum
  * @property-read \App\Models\Group $group
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Permission newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Permission newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Permission query()
@@ -39,6 +44,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Permission extends Model
 {
+    use HasFactory;
+    use Auditable;
+
     /**
      * Tells Laravel To Not Maintain The Timestamp Columns.
      *

@@ -2,33 +2,56 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     Mr.G
  */
 
 namespace App\Http\Controllers\Staff;
 
-use Carbon\Carbon;
-use App\Models\Peer;
-use App\Models\History;
+use App\Events\MessageDeleted;
 use App\Http\Controllers\Controller;
+use App\Models\History;
+use App\Models\Message;
+use App\Models\Peer;
+use App\Repositories\ChatRepository;
+use Carbon\Carbon;
 
+/**
+ * @see \Tests\Todo\Feature\Http\Controllers\Staff\FlushControllerTest
+ */
 class FlushController extends Controller
 {
     /**
-     * Delete All Old Peers From Database.
-     *
-     * @return Illuminate\Http\RedirectResponse
+     * @var ChatRepository
      */
-    public function deleteOldPeers()
+    private $chatRepository;
+
+    /**
+     * ChatController Constructor.
+     *
+     * @param \App\Repositories\ChatRepository $chatRepository
+     */
+    public function __construct(ChatRepository $chatRepository)
     {
-        $current = new Carbon();
-        $peers = Peer::select(['id', 'info_hash', 'user_id', 'updated_at'])->where('updated_at', '<', $current->copy()->subHours(2)->toDateTimeString())->get();
+        $this->chatRepository = $chatRepository;
+    }
+
+    /**
+     * Flsuh All Old Peers From Database.
+     *
+     * @throws \Exception
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function peers()
+    {
+        $carbon = new Carbon();
+        $peers = Peer::select(['id', 'info_hash', 'user_id', 'updated_at'])->where('updated_at', '<', $carbon->copy()->subHours(2)->toDateTimeString())->get();
 
         foreach ($peers as $peer) {
             $history = History::where('info_hash', '=', $peer->info_hash)->where('user_id', '=', $peer->user_id)->first();
@@ -39,7 +62,29 @@ class FlushController extends Controller
             $peer->delete();
         }
 
-        return redirect()->to('staff_dashboard')
+        return \redirect()->route('staff.dashboard.index')
             ->withSuccess('Ghost Peers Have Been Flushed');
+    }
+
+    /**
+     * Flush All Chat Messages.
+     *
+     * @throws \Exception
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function chat()
+    {
+        foreach (Message::all() as $message) {
+            \broadcast(new MessageDeleted($message));
+            $message->delete();
+        }
+
+        $this->chatRepository->systemMessage(
+            'Chatbox Has Been Flushed! :broom:'
+        );
+
+        return \redirect()->route('staff.dashboard.index')
+            ->withSuccess('Chatbox Has Been Flushed');
     }
 }

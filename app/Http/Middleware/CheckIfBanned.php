@@ -2,19 +2,19 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Http\Middleware;
 
-use Closure;
 use App\Models\Group;
+use Closure;
 
 class CheckIfBanned
 {
@@ -25,18 +25,20 @@ class CheckIfBanned
      * @param \Closure                 $next
      * @param string|null              $guard
      *
+     * @throws \Exception
+     *
      * @return mixed
      */
     public function handle($request, Closure $next, $guard = null)
     {
         $user = $request->user();
-        $bannedGroup = Group::select(['id'])->where('slug', '=', 'banned')->first();
+        $banned_group = \cache()->rememberForever('banned_group', fn () => Group::where('slug', '=', 'banned')->pluck('id'));
 
-        if ($user && $user->group_id == $bannedGroup->id) {
-            auth()->logout();
+        if ($user && $user->group_id == $banned_group[0]) {
+            \auth()->logout();
             $request->session()->flush();
 
-            return redirect()->to('login')
+            return \redirect()->route('login')
                 ->withErrors('This account is Banned!');
         }
 

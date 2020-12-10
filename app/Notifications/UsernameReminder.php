@@ -2,21 +2,21 @@
 /**
  * NOTICE OF LICENSE.
  *
- * UNIT3D is open-sourced software licensed under the GNU General Public License v3.0
+ * UNIT3D Community Edition is open-sourced software licensed under the GNU Affero General Public License v3.0
  * The details is bundled with this project in the file LICENSE.txt.
  *
- * @project    UNIT3D
+ * @project    UNIT3D Community Edition
  *
+ * @author     HDVinnie <hdinnovations@protonmail.com>
  * @license    https://www.gnu.org/licenses/agpl-3.0.en.html/ GNU Affero General Public License v3.0
- * @author     HDVinnie
  */
 
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class UsernameReminder extends Notification implements ShouldQueue
 {
@@ -54,10 +54,10 @@ class UsernameReminder extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         return (new MailMessage())
-                    ->subject(trans('common.your').' '.config('app.name').' '.trans('common.username'))
-                    ->greeting(trans('common.contact-header').', '.$notifiable->username)
-                    ->line(trans('email.username-reminder').' '.$notifiable->username)
-                    ->action('Login as '.$notifiable->username, route('login'))
-                    ->line(trans('email.thanks').' '.config('app.name'));
+                    ->subject(\trans('common.your').' '.\config('app.name').' '.\trans('common.username'))
+                    ->greeting(\trans('common.contact-header').', '.$notifiable->username)
+                    ->line(\trans('email.username-reminder').' '.$notifiable->username)
+                    ->action('Login as '.$notifiable->username, \route('login'))
+                    ->line(\trans('email.thanks').' '.\config('app.name'));
     }
 }
